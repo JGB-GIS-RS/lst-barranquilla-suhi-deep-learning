@@ -1,0 +1,41 @@
+# Model configuration file.
+
+model:
+  name: "unet-convlstm-se"
+  task: "spatial_temporal_regression"
+  target_variable: "LST"
+
+input:
+  variables:
+    - NDVI
+    - NDWI
+    - NDBI
+    - UI
+    - SAVI
+
+  temporal_window:
+    time_steps: null
+    description: "To be defined according to the final temporal sequence used in the manuscript."
+
+  tensor_format:
+    conceptual_order: "samples x time_steps x rows x columns x variables"
+    framework_order: "To be specified in the final implementation."
+
+architecture:
+  encoder: true
+  decoder: true
+  skip_connections: true
+  convlstm: true
+  channel_attention: true
+  attention_type: "squeeze-and-excitation"
+
+parameters:
+  patch_size: null
+  batch_normalization: null
+  dropout_rate: null
+  activation: "relu"
+  output_activation: "linear"
+
+notes:
+  - "This configuration file defines the intended model structure."
+  - "Final hyperparameters must be updated after model implementation and validation."
