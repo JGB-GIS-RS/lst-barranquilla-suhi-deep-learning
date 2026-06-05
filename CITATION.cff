@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite the associated manuscript or this software repository."
+title: "lst-barranquilla-suhi-deep-learning"
+type: software
+
+authors:
+  - family-names: "Garzón Barrero"
+    given-names: "Julián"
+
+abstract: "Computational workflow for modeling Surface Urban Heat Island patterns in Barranquilla, Colombia, using Landsat-derived spectral indices, land surface temperature, and deep learning models."
+
+keywords:
+  - surface urban heat island
+  - land surface temperature
+  - Landsat
+  - deep learning
+  - remote sensing
+  - Barranquilla
+  - Colombia
+
+license: MIT
+repository-code: "https://github.com/JGB-GIS-RS/lst-barranquilla-suhi-deep-learning"
+date-released: 2026-06-04
