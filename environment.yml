@@ -1,0 +1,29 @@
+name: lst-barranquilla-suhi
+
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - geopandas
+  - rasterio
+  - rioxarray
+  - xarray
+  - scipy
+  - scikit-learn
+  - scikit-image
+  - matplotlib
+  - seaborn
+  - tqdm
+  - pyyaml
+  - jupyter
+  - notebook
+  - ipykernel
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pip
