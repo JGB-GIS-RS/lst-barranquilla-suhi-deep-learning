@@ -1,0 +1,25 @@
+# Example path configuration file.
+# Copy this file as paths.yml and edit it according to your local or cloud environment.
+# Do not commit paths.yml if it contains personal or machine-specific paths.
+
+project:
+  name: "lst-barranquilla-suhi-deep-learning"
+
+paths:
+  raw_data: "/path/to/raw_landsat_data"
+  processed_data: "/path/to/processed_rasters"
+  tensors: "/path/to/tensors"
+  patches: "/path/to/patches"
+  models: "/path/to/model_checkpoints"
+  outputs: "/path/to/outputs"
+
+outputs:
+  figures: "/path/to/outputs/figures"
+  tables: "/path/to/outputs/tables"
+  maps: "/path/to/outputs/maps"
+  logs: "/path/to/outputs/logs"
+
+notes:
+  - "This is an example configuration file."
+  - "Large data files should not be stored in the GitHub repository."
+  - "Use paths.yml locally and keep it excluded from version control."
