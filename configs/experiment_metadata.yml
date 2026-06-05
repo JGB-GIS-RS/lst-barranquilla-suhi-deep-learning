@@ -1,0 +1,36 @@
+# Experiment metadata file.
+
+experiment:
+  name: "barranquilla_suhi_deep_learning"
+  status: "under_development"
+  associated_manuscript: null
+  study_area: "Barranquilla, Colombia"
+
+data:
+  satellite_product: "Landsat Collection 2 Level-2"
+  temporal_coverage: null
+  path_row: null
+  number_of_scenes: null
+
+modeling:
+  main_model: "U-Net + ConvLSTM + channel attention"
+  baseline_models:
+    - persistence
+    - linear_regression
+    - random_forest_regression
+    - unet_2d
+    - convlstm_without_attention
+
+reproducibility:
+  repository_status: "private"
+  large_data_included: false
+  sample_data_included: false
+  environment_files:
+    - requirements.txt
+    - environment.yml
+
+authorship:
+  primary_author: "Julián Garzón Barrero"
+
+notes:
+  - "This metadata file must be updated when the manuscript and final experiments are consolidated."
