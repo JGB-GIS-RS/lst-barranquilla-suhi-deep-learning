@@ -216,3 +216,56 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific exclusions
+
+# Local path configuration
+configs/paths.yml
+
+# Large geospatial data
+*.tif
+*.tiff
+*.vrt
+*.img
+*.hdr
+*.aux.xml
+*.ovr
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+
+# Tensor and array data
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.zarr
+
+# Model checkpoints and weights
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Large output directories
+data/raw/
+data/processed/
+data/tensors/
+data/patches/
+outputs/figures/
+outputs/tables/
+outputs/maps/
+outputs/logs/
+outputs/checkpoints/
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
