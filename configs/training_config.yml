@@ -1,0 +1,40 @@
+# Training configuration file.
+
+training:
+  loss_function: "mean_squared_error"
+  optimizer: "adam"
+  learning_rate: null
+  batch_size: null
+  epochs: null
+  early_stopping: true
+  early_stopping_patience: null
+  reduce_lr_on_plateau: true
+
+data_partitioning:
+  strategy: "to_be_defined"
+  train_period: null
+  validation_period: null
+  test_period: null
+  spatial_holdout: null
+  temporal_holdout: null
+
+normalization:
+  spectral_indices: "robust_min_max"
+  lst: "train_only_standardization"
+  leakage_control: "Normalization parameters must be estimated using training data only."
+
+evaluation:
+  metrics:
+    - RMSE
+    - MAE
+    - R2
+    - bias
+    - residual_standard_deviation
+
+hardware:
+  gpu: null
+  environment: null
+
+notes:
+  - "Random patch-level splitting can inflate performance due to spatial autocorrelation."
+  - "The final partitioning strategy must be explicitly documented."
