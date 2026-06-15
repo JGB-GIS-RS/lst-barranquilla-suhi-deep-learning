@@ -39,11 +39,55 @@ The operational period for the Landsat 8/9 workflow is 2013–2025.
 
 The year 2026 is not included in the operational analysis because the annual period is incomplete.
 
+## Temporal partitioning
+
+The intended temporal partitioning strategy is:
+
+* Training period: 2013–2019
+* Validation period: 2020–2022
+* Test period: 2023–2025
+
+The training period is used to estimate normalization parameters.
+
+Validation and test periods must not be used to estimate normalization parameters.
+
+## Normalization strategy
+
+Train-only normalization is implemented as an independent workflow stage in:
+
+```
+04_train_only_normalization.ipynb
+```
+
+This notebook estimates:
+
+* global z-score parameters for LST using training data only;
+* robust percentile-based scaling parameters for spectral indices using training data only.
+
+The estimated parameters are then fixed and applied consistently to training, validation, and test periods.
+
 ## Path management
 
 Notebooks should avoid hard-coded personal paths.
 
 Local or cloud paths should be loaded from:
 
-```text
+```
 configs/paths_example.yml
+```
+
+Users should copy this file as:
+
+```
+configs/paths.yml
+```
+
+and modify it locally.
+
+The file `paths.yml` should not be committed to the repository if it contains personal or machine-specific paths.
+
+## Data policy
+
+Large raster datasets, tensors, patches, model checkpoints, and full-resolution outputs should not be uploaded to GitHub.
+
+Lightweight tabular products, such as scene inventories and summary tables, may be included when they improve transparency and reproducibility.
