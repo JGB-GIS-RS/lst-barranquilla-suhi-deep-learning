@@ -1,40 +1,90 @@
 # Training configuration file.
 
 training:
-  loss_function: "mean_squared_error"
-  optimizer: "adam"
-  learning_rate: null
-  batch_size: null
-  epochs: null
-  early_stopping: true
-  early_stopping_patience: null
-  reduce_lr_on_plateau: true
+task: "spatial_temporal_regression"
+loss_function: "mean_squared_error"
+masked_loss: true
+optimizer: "adam"
+learning_rate: null
+batch_size: null
+epochs: null
+early_stopping: true
+early_stopping_patience: null
+reduce_lr_on_plateau: true
+reduce_lr_patience: null
+minimum_learning_rate: null
+
+temporal_formulation:
+input_states:
+- label: "T1"
+year_offset: -3
+description: "Antecedent state Y-3"
+- label: "T2"
+year_offset: -2
+description: "Antecedent state Y-2"
+- label: "T3"
+year_offset: -1
+description: "Antecedent state Y-1"
+target:
+label: "Y"
+variable: "LST"
+description: "Land surface temperature at target year Y"
+target_year_lst_as_input: false
 
 data_partitioning:
-  strategy: "to_be_defined"
-  train_period: null
-  validation_period: null
-  test_period: null
-  spatial_holdout: null
-  temporal_holdout: null
+strategy: "temporal_holdout"
+train_period: null
+validation_period: null
+test_period: null
+spatial_holdout: null
+temporal_holdout: true
+random_patch_split: false
+description: "Training, validation, and test partitions must be separated by target year to reduce temporal leakage."
 
 normalization:
-  spectral_indices: "robust_min_max"
-  lst: "train_only_standardization"
-  leakage_control: "Normalization parameters must be estimated using training data only."
+spectral_indices: "robust_min_max"
+lst: "train_only_standardization"
+climate_forcings: "train_only_standardization"
+leakage_control:
+normalization_parameters_from_training_only: true
+validation_data_used_for_normalization: false
+test_data_used_for_normalization: false
+
+input_control:
+allowed_input_groups:
+- landsat_spectral_indices
+- interannual_climate_forcings
+prohibited_input_variables:
+- observed_LST_target_year
+- predicted_LST_previous_models
+climate_forcings_use_observed_target_lst: false
 
 evaluation:
-  metrics:
-    - RMSE
-    - MAE
-    - R2
-    - bias
-    - residual_standard_deviation
+metrics:
+- RMSE
+- MAE
+- R2
+- bias
+- residual_standard_deviation
+diagnostics:
+- year_wise_metrics
+- observed_vs_predicted_maps
+- residual_maps
+- spatial_error_patterns
+
+model_comparison:
+same_partitions_across_models: true
+same_normalization_across_models: true
+same_masking_across_models: true
+same_evaluation_metrics_across_models: true
 
 hardware:
-  gpu: null
-  environment: null
+gpu: null
+environment: null
+runtime: null
 
 notes:
-  - "Random patch-level splitting can inflate performance due to spatial autocorrelation."
-  - "The final partitioning strategy must be explicitly documented."
+
+* "Random patch-level splitting can inflate performance due to spatial autocorrelation."
+* "The final train, validation, and test periods must be explicitly documented after the executed workflow is fixed."
+* "Evaluation metrics should be reported in physical LST units after inverse transformation when normalized LST is used during training."
