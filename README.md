@@ -51,12 +51,38 @@ The workflow is organized around the following components:
 ```
 lst-barranquilla-suhi-deep-learning/
 │
-├── configs/      Configuration files for paths, models, training, and experiments.
-├── data/         Data documentation and lightweight tabular products.
-├── docs/         Methodological and reproducibility documentation.
-├── notebooks/    Sequential notebooks for the computational workflow.
-├── outputs/      Documentation of expected outputs.
-├── src/          Reusable Python source code.
+├── configs/                    Configuration files for paths, models, training, and experiments.
+│   ├── experiment_metadata.yml
+│   ├── model_config.yml
+│   ├── paths_example.yml
+│   └── training_config.yml
+│
+├── data/                       Data documentation and lightweight tabular products.
+│   ├── README.md
+│   ├── scene_inventory/
+│   └── quality_control/
+│
+├── docs/                       Methodological and reproducibility documentation.
+│   ├── README.md
+│   ├── data_sources.md
+│   ├── preprocessing.md
+│   ├── modeling.md
+│   ├── workflow.md
+│   ├── reproducibility_notes.md
+│   ├── repository_status.md
+│   └── figures/
+│       └── quality_control/
+│
+├── notebooks/                  Sequential notebooks for the computational workflow.
+│   ├── README.md
+│   ├── notebook_index.md
+│   ├── 01_scene_inventory_landsat_8_9.ipynb
+│   ├── 02_preprocessing_lst_indices.ipynb
+│   └── 03_quality_control.ipynb
+│
+├── outputs/                    Documentation of expected outputs, not heavy model outputs.
+│
+├── src/                        Reusable Python source code.
 │
 ├── .gitignore
 ├── CITATION.cff
