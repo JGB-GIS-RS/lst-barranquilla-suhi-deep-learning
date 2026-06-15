@@ -1,41 +1,108 @@
 # Model configuration file.
 
 model:
-  name: "unet-convlstm-se"
-  task: "spatial_temporal_regression"
-  target_variable: "LST"
+name: "unet-convlstm-se-climate"
+task: "spatial_temporal_regression"
+target_variable: "LST"
+prediction_target: "LST at target year Y"
+model_family: "U-Net + ConvLSTM + channel attention"
 
 input:
-  variables:
-    - NDVI
-    - NDWI
-    - NDBI
-    - UI
-    - SAVI
+temporal_sequence:
+time_steps: 3
+states:
+- label: "T1"
+year_offset: -3
+description: "Antecedent state Y-3"
+- label: "T2"
+year_offset: -2
+description: "Antecedent state Y-2"
+- label: "T3"
+year_offset: -1
+description: "Antecedent state Y-1"
 
-  temporal_window:
-    time_steps: null
-    description: "To be defined according to the final temporal sequence used in the manuscript."
+spectral_variables:
+- NDVI
+- NDMI_or_NDWI
+- NDBI
+- UI
+- SAVI
+- BSI
 
-  tensor_format:
-    conceptual_order: "samples x time_steps x rows x columns x variables"
-    framework_order: "To be specified in the final implementation."
+climate_forcings:
+include: true
+type: "interannual_climate_forcings"
+expected_variables:
+- delta_2m_air_temperature
+- delta_surface_solar_radiation
+description: "Interannual climate forcing variables used to contextualize the thermal response without using observed LST or previous model predictions as input features."
+
+prohibited_input_variables:
+- observed_LST_target_year
+- predicted_LST_previous_models
+
+tensor_format:
+conceptual_order: "samples x time_steps x rows x columns x variables"
+framework_order: "To be specified in the final implementation."
 
 architecture:
-  encoder: true
-  decoder: true
-  skip_connections: true
-  convlstm: true
-  channel_attention: true
-  attention_type: "squeeze-and-excitation"
+encoder: true
+decoder: true
+skip_connections: true
+convlstm: true
+channel_attention: true
+attention_type: "squeeze-and-excitation"
+output_type: "single_band_regression_map"
+
+model_sequence:
+
+* name: "unet_2d"
+  description: "U-Net 2D without explicit temporal memory."
+* name: "convlstm_unet"
+  description: "ConvLSTM U-Net without channel attention."
+* name: "convlstm_se_unet"
+  description: "ConvLSTM U-Net with squeeze-and-excitation channel attention."
+* name: "convlstm_se_unet_climate"
+  description: "Final ConvLSTM + SE U-Net with interannual climate forcings."
 
 parameters:
-  patch_size: null
-  batch_normalization: null
-  dropout_rate: null
-  activation: "relu"
-  output_activation: "linear"
+patch_size: null
+batch_normalization: null
+dropout_rate: null
+activation: "relu"
+output_activation: "linear"
+loss_function: null
+optimizer: null
+learning_rate: null
+batch_size: null
+epochs: null
+early_stopping: null
+
+training_validation:
+split_strategy: "temporal_holdout"
+train_years: null
+validation_years: null
+test_years: null
+normalization: "training_data_only"
+leakage_control:
+target_year_LST_as_input: false
+validation_test_years_in_training: false
+normalization_from_full_dataset: false
+
+evaluation:
+metrics:
+- RMSE
+- MAE
+- R2
+- bias
+- residual_standard_deviation
+spatial_diagnostics:
+- residual_maps
+- observed_vs_predicted_maps
+- year_wise_error_maps
 
 notes:
-  - "This configuration file defines the intended model structure."
-  - "Final hyperparameters must be updated after model implementation and validation."
+
+* "This configuration file defines the intended model structure and comparison sequence."
+* "Final hyperparameters must be updated after model implementation and validation."
+* "The final input variable list must match the manuscript, notebooks, and executed model pipeline."
