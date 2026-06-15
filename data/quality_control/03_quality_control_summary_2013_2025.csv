@@ -1,0 +1,12 @@
+item,value
+operational_period,2013-2025
+expected_v3_files,117
+found_v3_files,126
+missing_v3_files,0
+v3_all_files_present,True
+v3_all_geom_ref_ok,False
+apply_structural_T30_mask,True
+apply_final_domain,True
+build_common_valid_mask,True
+v6_all_status_approved,True
+v6_total_mismatch_pixels,0
