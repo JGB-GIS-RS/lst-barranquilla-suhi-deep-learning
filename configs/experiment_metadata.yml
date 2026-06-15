@@ -29,8 +29,13 @@ reproducibility:
     - requirements.txt
     - environment.yml
 
-authorship:
-  primary_author: "Julián Garzón Barrero"
+authors:
+    - name: "Julián Garzón Barrero"
+      affiliation: "Universidad del Quindío"
+    - name: "Nancy Este Sánchez-Pineda"
+      affiliation: "Universidad Politécnica de Madrid; Universidad del Quindío"
+    - name: "Iñigo Molina Sánchez"
+      affiliation: "Universidad Politécnica de Madrid"  
 
 notes:
   - "This metadata file must be updated when the manuscript and final experiments are consolidated."
