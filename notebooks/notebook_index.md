@@ -8,8 +8,8 @@ The notebooks should be executed sequentially. Each notebook must have a clear o
 
 | Order | Notebook | Purpose |
 |---:|---|---|
-| 01 | `01_landsat_inventory.ipynb` | Build and document the Landsat scene inventory. |
-| 02 | `02_preprocessing_lst_indices.ipynb` | Apply masking, extract LST, and compute spectral indices. |
+| 01 | `01_scene_inventory_landsat_8_9.ipynb` | Build the Landsat 8/9 scene inventory for the 2013–2025 operational period. |
+| 02 | `02_preprocessing_lst_indices.ipynb` | Apply masking, extract LST, and compute Landsat-derived spectral indices. |
 | 03 | `03_quality_control.ipynb` | Evaluate valid pixels, scene statistics, masks, and anomalous scenes. |
 | 04 | `04_tensor_construction.ipynb` | Build multi-temporal tensors from aligned raster variables. |
 | 05 | `05_patch_extraction.ipynb` | Extract spatial-temporal patches for model training and evaluation. |
@@ -29,7 +29,13 @@ Each notebook should include:
 - configuration files used;
 - execution notes;
 - limitations;
-- reproducibility warnings when needed.
+- reproducibility notes when needed.
+
+## Temporal scope
+
+The operational period for the Landsat 8/9 workflow is 2013–2025.
+
+The year 2026 is not included in the operational analysis because the annual period is incomplete.
 
 ## Path management
 
