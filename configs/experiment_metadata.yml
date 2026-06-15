@@ -9,8 +9,8 @@ experiment:
 data:
   satellite_product: "Landsat Collection 2 Level-2"
   temporal_coverage: null
-  path_row: null
-  number_of_scenes: null
+  path_row: 009,052
+  number_of_scenes: 364
 
 modeling:
   main_model: "U-Net + ConvLSTM + channel attention"
