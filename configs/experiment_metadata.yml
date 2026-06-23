@@ -1,41 +1,105 @@
-# Experiment metadata file.
+# Experiment metadata for the Barranquilla LST/SUHI deep-learning workflow.
 
 experiment:
-  name: "barranquilla_suhi_deep_learning"
+  name: "barranquilla_landsat_suhi_deep_learning"
   status: "under_development"
   associated_manuscript: null
   study_area: "Barranquilla, Colombia"
+  repository: "https://github.com/JGB-GIS-RS/lst-barranquilla-suhi-deep-learning"
 
-data:
-  satellite_product: "Landsat Collection 2 Level-2"
-  temporal_coverage: null
-  path_row: 009,052
+spatial_domain:
+  city: "Barranquilla"
+  country: "Colombia"
+  landsat_wrs2_path: "009"
+  landsat_wrs2_row: "052"
+  projected_crs: "EPSG:32618"
+  spatial_resolution_m: 30
+
+satellite_data:
+  primary_product: "Landsat Collection 2 Level-2 Science Products"
+  sensors:
+    - "Landsat 8 OLI/TIRS"
+    - "Landsat 9 OLI-2/TIRS-2"
+  temporal_coverage: "2013-2025"
+  excluded_years:
+    - year: 2026
+      reason: "Incomplete annual period for the operational annual workflow."
   number_of_scenes: 364
 
+climate_data:
+  source: "NASA POWER Daily API"
+  temporal_coverage: "2013-2025"
+  spatial_reference: "Model-domain centroid"
+  data_type: "Annual regional point-based climate descriptors"
+  candidate_daily_variables:
+    - "T2M"
+    - "T2M_MAX"
+    - "T2M_MIN"
+    - "ALLSKY_SFC_SW_DWN"
+    - "PRECTOTCORR"
+    - "RH2M"
+    - "WS2M"
+  retained_model_variables:
+    - "delta_t2m_mean_Y_minus_Yminus1"
+    - "delta_solar_radiation_mean_Y_minus_Yminus1"
+
 modeling:
-  main_model: "U-Net + ConvLSTM + channel attention"
+  task: "Spatial-temporal regression"
+  target_variable: "LST"
+  target_units: "degrees Celsius"
+  temporal_formulation: "Use Y-3, Y-2, and Y-1 to predict LST at target year Y."
+  main_model: "ConvLSTM + SE U-Net with interannual climate forcings"
   baseline_models:
-    - persistence
-    - linear_regression
-    - random_forest_regression
-    - unet_2d
-    - convlstm_without_attention
+    - "U-Net 2D"
+    - "ConvLSTM U-Net"
+    - "ConvLSTM + SE U-Net"
+    - "ConvLSTM + SE U-Net with interannual climate forcings"
+  final_model_label: "M5B"
+
+partitioning:
+  normalization_train_period: "2013-2019"
+  target_train_years:
+    - 2016
+    - 2017
+    - 2018
+    - 2019
+  target_validation_years:
+    - 2020
+    - 2021
+    - 2022
+  target_test_years:
+    - 2023
+    - 2024
+    - 2025
+  leakage_control:
+    train_only_normalization: true
+    target_year_lst_as_input: false
+    validation_test_used_for_normalization: false
 
 reproducibility:
-  repository_status: "private"
+  repository_status: "public"
   large_data_included: false
   sample_data_included: false
   environment_files:
-    - requirements.txt
-    - environment.yml
+    - "requirements.txt"
+    - "environment.yml"
+  excluded_large_outputs:
+    - "Raw satellite scenes"
+    - "Full-resolution GeoTIFF products"
+    - "Tensor datasets"
+    - "Patch datasets"
+    - "Model checkpoints"
+    - "Prediction maps"
 
 authors:
-    - name: "Julián Garzón Barrero"
-      affiliation: "Universidad del Quindío"
-    - name: "Nancy Este Sánchez-Pineda"
-      affiliation: "Universidad Politécnica de Madrid; Universidad del Quindío"
-    - name: "Iñigo Molina Sánchez"
-      affiliation: "Universidad Politécnica de Madrid"  
+  - name: "Julián Garzón Barrero"
+    affiliation: "Universidad del Quindío"
+  - name: "Nancy Este Sánchez-Pineda"
+    affiliation: "Universidad Politécnica de Madrid; Universidad del Quindío"
+  - name: "Iñigo Molina Sánchez"
+    affiliation: "Universidad Politécnica de Madrid"
 
 notes:
-  - "This metadata file must be updated when the manuscript and final experiments are consolidated."
+  - "This metadata file documents the current reproducibility state of the GitHub repository."
+  - "Large computational products must remain outside the repository and be reconstructed from the documented workflow."
+  - "NASA POWER variables are annual regional descriptors and should not be interpreted as pixel-level spatial climate rasters."

@@ -1,108 +1,142 @@
-# Model configuration file.
+# Model configuration for the Barranquilla LST/SUHI spatial-temporal workflow.
 
 model:
-name: "unet-convlstm-se-climate"
-task: "spatial_temporal_regression"
-target_variable: "LST"
-prediction_target: "LST at target year Y"
-model_family: "U-Net + ConvLSTM + channel attention"
+  name: "convlstm-se-unet-climate"
+  label: "M5B"
+  task: "spatial_temporal_regression"
+  target_variable: "LST"
+  target_units: "degrees Celsius"
+  prediction_target: "LST at target year Y"
+  model_family: "U-Net + ConvLSTM + squeeze-and-excitation channel attention"
 
 input:
-temporal_sequence:
-time_steps: 3
-states:
-- label: "T1"
-year_offset: -3
-description: "Antecedent state Y-3"
-- label: "T2"
-year_offset: -2
-description: "Antecedent state Y-2"
-- label: "T3"
-year_offset: -1
-description: "Antecedent state Y-1"
+  temporal_sequence:
+    time_steps: 3
+    states:
+      - label: "T1"
+        year_offset: -3
+        description: "Antecedent state Y-3"
+      - label: "T2"
+        year_offset: -2
+        description: "Antecedent state Y-2"
+      - label: "T3"
+        year_offset: -1
+        description: "Antecedent state Y-1"
 
-spectral_variables:
-- NDVI
-- NDMI_or_NDWI
-- NDBI
-- UI
-- SAVI
-- BSI
+  spectral_variables:
+    - "NDVI"
+    - "NDMI"
+    - "NDBI"
+    - "UI"
+    - "SAVI"
+    - "BSI"
 
-climate_forcings:
-include: true
-type: "interannual_climate_forcings"
-expected_variables:
-- delta_2m_air_temperature
-- delta_surface_solar_radiation
-description: "Interannual climate forcing variables used to contextualize the thermal response without using observed LST or previous model predictions as input features."
+  quality_variables:
+    include_observation_quality_mask: true
+    description: "Continuous observation-quality mask retained as an auxiliary quality-control input when used by the executed model."
 
-prohibited_input_variables:
-- observed_LST_target_year
-- predicted_LST_previous_models
+  climate_forcings:
+    include: true
+    source: "NASA POWER Daily API"
+    type: "annual_interannual_regional_descriptors"
+    spatial_reference: "Model-domain centroid"
+    retained_variables:
+      - name: "delta_t2m_mean_Y_minus_Yminus1"
+        short_name: "delta_t2m"
+        description: "Interannual change in annual mean 2 m air temperature between target year Y and Y-1."
+      - name: "delta_solar_radiation_mean_Y_minus_Yminus1"
+        short_name: "delta_radiation"
+        description: "Interannual change in annual mean all-sky surface shortwave downward radiation between target year Y and Y-1."
+    evaluated_but_not_retained:
+      - "precipitation descriptors"
+      - "relative humidity descriptors"
+      - "wind-speed descriptors"
+      - "absolute annual climate descriptors"
+      - "climate anomalies"
+    description: "Climate variables are used as annual interannual context and must not encode observed target-year LST."
 
-tensor_format:
-conceptual_order: "samples x time_steps x rows x columns x variables"
-framework_order: "To be specified in the final implementation."
+  prohibited_input_variables:
+    - "observed_LST_target_year"
+    - "predicted_LST_previous_models"
+    - "validation_or_test_target_LST_as_predictor"
+
+  tensor_format:
+    conceptual_order: "samples x time_steps x rows x columns x variables"
+    framework_order: "To be specified in the executed implementation."
 
 architecture:
-encoder: true
-decoder: true
-skip_connections: true
-convlstm: true
-channel_attention: true
-attention_type: "squeeze-and-excitation"
-output_type: "single_band_regression_map"
+  encoder: true
+  decoder: true
+  skip_connections: true
+  convlstm: true
+  channel_attention: true
+  attention_type: "squeeze-and-excitation"
+  output_type: "single_band_regression_map"
 
 model_sequence:
-
-* name: "unet_2d"
-  description: "U-Net 2D without explicit temporal memory."
-* name: "convlstm_unet"
-  description: "ConvLSTM U-Net without channel attention."
-* name: "convlstm_se_unet"
-  description: "ConvLSTM U-Net with squeeze-and-excitation channel attention."
-* name: "convlstm_se_unet_climate"
-  description: "Final ConvLSTM + SE U-Net with interannual climate forcings."
+  - name: "unet_2d"
+    label: "M1"
+    description: "U-Net 2D without explicit temporal memory."
+  - name: "convlstm_unet"
+    label: "M2"
+    description: "ConvLSTM U-Net without channel attention."
+  - name: "convlstm_se_unet"
+    label: "M4"
+    description: "ConvLSTM U-Net with squeeze-and-excitation channel attention."
+  - name: "convlstm_se_unet_climate"
+    label: "M5B"
+    description: "Final ConvLSTM + SE U-Net with selected NASA POWER interannual climate forcings."
 
 parameters:
-patch_size: null
-batch_normalization: null
-dropout_rate: null
-activation: "relu"
-output_activation: "linear"
-loss_function: null
-optimizer: null
-learning_rate: null
-batch_size: null
-epochs: null
-early_stopping: null
+  patch_size: null
+  batch_normalization: null
+  dropout_rate: null
+  activation: "relu"
+  output_activation: "linear"
+  loss_function: "mean_squared_error"
+  optimizer: "adam"
+  learning_rate: null
+  batch_size: null
+  epochs: null
+  early_stopping: true
 
 training_validation:
-split_strategy: "temporal_holdout"
-train_years: null
-validation_years: null
-test_years: null
-normalization: "training_data_only"
-leakage_control:
-target_year_LST_as_input: false
-validation_test_years_in_training: false
-normalization_from_full_dataset: false
+  split_strategy: "temporal_holdout"
+  normalization_train_period: "2013-2019"
+  target_train_years:
+    - 2016
+    - 2017
+    - 2018
+    - 2019
+  target_validation_years:
+    - 2020
+    - 2021
+    - 2022
+  target_test_years:
+    - 2023
+    - 2024
+    - 2025
+  normalization: "training_data_only"
+  leakage_control:
+    target_year_LST_as_input: false
+    validation_test_years_in_training: false
+    normalization_from_full_dataset: false
+    previous_model_predictions_as_inputs: false
 
 evaluation:
-metrics:
-- RMSE
-- MAE
-- R2
-- bias
-- residual_standard_deviation
-spatial_diagnostics:
-- residual_maps
-- observed_vs_predicted_maps
-- year_wise_error_maps
+  metrics:
+    - "RMSE"
+    - "MAE"
+    - "R2"
+    - "bias"
+    - "residual_standard_deviation"
+  spatial_diagnostics:
+    - "residual_maps"
+    - "observed_vs_predicted_maps"
+    - "year_wise_error_maps"
 
 notes:
-
-* "This configuration file defines the intended model structure and comparison sequence."
-* "Final hyperparameters must be updated after model implementation and validation."
-* "The final input variable list must match the manuscript, notebooks, and executed model pipeline."
+  - "This configuration file defines the intended model structure and comparison sequence."
+  - "Final hyperparameters must be updated after model implementation and validation."
+  - "The final input variable list must match the manuscript, notebooks, and executed model pipeline."
+  - "NASA POWER variables are regional annual descriptors, not spatial raster predictors."

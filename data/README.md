@@ -1,90 +1,101 @@
 # Data
 
-This directory documents the data sources and reconstruction workflow used in the study.
+This directory documents the data sources and lightweight tabular products used in the Barranquilla LST/SUHI workflow.
 
-The repository does not store large geospatial datasets. It may include lightweight tabular products that improve transparency and reproducibility, such as scene inventories and summary tables.
+The repository does not store large geospatial datasets. It may include lightweight CSV, JSON, and metadata products that improve transparency and reproducibility.
 
 ## Data scope
 
-The study uses Landsat 8/9 Collection 2 Level-2 products to derive land surface temperature and spectral indices for the Barranquilla study area.
+The study uses Landsat 8/9 Collection 2 Level-2 products to derive annual land surface temperature and spectral indices for Barranquilla, Colombia.
 
-The operational period of the workflow is:
+The operational period is:
 
+```text
+2013-2025
 ```
-2013–2025
-```
 
-The year 2026 is excluded from the operational analysis because the annual period is incomplete.
+The year 2026 is excluded from the operational annual workflow because the annual period is incomplete.
 
 The Landsat WRS-2 reference used for the scene inventory is:
 
-```
+```text
 Path: 9
 Row: 52
 ```
 
-## Directory structure
+## Expected directory structure
 
-The expected structure of this directory is:
-
-```
+```text
 data/
-│
+|
 ├── README.md
-└── scene_inventory/
-    ├── scene_inventory_landsat89_2013_2025.csv
-    ├── annual_scene_count_landsat89_2013_2025.csv
-    └── monthly_scene_count_landsat89_2013_2025.csv
+├── scene_inventory/
+├── quality_control/
+├── normalization/
+└── climate_forcings/
 ```
 
 ## Scene inventory
 
-The `scene_inventory/` directory may contain lightweight CSV files derived from the Landsat 8/9 scene inventory.
-
-These files are included to allow reviewers and users to inspect the temporal availability of the input scenes without downloading large raster datasets.
+The `scene_inventory/` directory contains lightweight tables derived from the Landsat 8/9 scene inventory.
 
 Expected files include:
 
-* `scene_inventory_landsat89_2013_2025.csv`: scene-level inventory.
-* `annual_scene_count_landsat89_2013_2025.csv`: annual scene count by sensor.
-* `monthly_scene_count_landsat89_2013_2025.csv`: monthly scene count by year and sensor.
+- `scene_inventory_landsat89_2013_2025.csv`
+- `annual_scene_count_landsat89_2013_2025.csv`
+- `monthly_scene_count_landsat89_2013_2025.csv`
+
+These files allow reviewers to inspect temporal availability without downloading large raster datasets.
+
+## Quality control
+
+The `quality_control/` directory contains lightweight reports produced by the quality-control workflow.
+
+These reports document file existence, geometry consistency, valid-pixel availability, land-domain masks, common valid masks, and annual product audits.
+
+## Normalization
+
+The `normalization/` directory contains train-only normalization parameters and audit tables.
+
+Expected products include:
+
+- normalization parameters for LST and spectral indices;
+- geometry and file-existence audits;
+- normalized-product value summaries;
+- train spatial mask summaries;
+- JSON summaries supporting reproducibility.
+
+## Climate forcings
+
+The `climate_forcings/` directory is reserved for lightweight annual NASA POWER climate forcing tables and diagnostics.
+
+NASA POWER variables are treated as annual regional descriptors associated with the model-domain centroid. They are not pixel-level spatial rasters.
+
+Expected products include annual climate tables, interannual deltas, selected climate input variables for the final model, and variable-selection traces.
 
 ## Data not stored in this repository
 
-Large geospatial datasets are not stored in this GitHub repository. This includes:
+Large geospatial and machine-learning products are not stored in this repository, including:
 
-* original Landsat scenes;
-* raster stacks;
-* full-resolution GeoTIFF outputs;
-* tensor datasets;
-* patch datasets;
-* trained model weights;
-* model checkpoints;
-* large prediction maps;
-* temporary preprocessing outputs.
+- original Landsat scenes;
+- full-resolution GeoTIFF products;
+- raster stacks;
+- tensor datasets;
+- patch datasets;
+- trained model weights;
+- model checkpoints;
+- large prediction maps;
+- temporary preprocessing outputs.
 
-These files should be reconstructed from the documented workflow or stored externally using an appropriate storage system.
+These files should be reconstructed from the documented workflow or stored externally.
 
 ## Reconstruction workflow
 
 Data reconstruction instructions are documented in:
 
-```
+```text
 docs/data_sources.md
 docs/preprocessing.md
+docs/workflow.md
 notebooks/notebook_index.md
 ```
-
-The first notebook associated with this directory is:
-
-```
-notebooks/01_scene_inventory_landsat_8_9.ipynb
-```
-
-This notebook documents the construction of the Landsat 8/9 scene inventory for the 2013–2025 operational period.
-
-## Sample data
-
-A small sample dataset may be included later only for testing the computational workflow.
-
-Any sample dataset must be clearly identified as a reduced demonstration dataset and must not be interpreted as the full dataset used in the manuscript.

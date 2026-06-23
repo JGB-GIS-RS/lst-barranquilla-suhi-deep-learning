@@ -1,14 +1,14 @@
 # lst-barranquilla-suhi-deep-learning
 
-Computational workflow for modeling land surface temperature and Surface Urban Heat Island (SUHI) patterns in Barranquilla, Colombia, using Landsat 8/9 Collection 2 Level-2 products, spectral indices, and deep learning models.
+Computational workflow for modeling land surface temperature (LST) and surface urban heat island (SUHI) patterns in Barranquilla, Colombia, using Landsat 8/9 Collection 2 Level-2 products, train-only normalization, interannual NASA POWER climate forcings, and spatial-temporal deep learning models.
 
 ## Overview
 
-This repository supports the computational workflow of a remote sensing study focused on spatial-temporal modeling of land surface temperature (LST) and surface urban heat patterns in Barranquilla, Colombia.
+This repository supports the reproducibility framework of a remote-sensing study focused on spatial-temporal modeling of LST in the urban and peri-urban domain of Barranquilla, Colombia.
 
-The workflow uses Landsat 8/9 Collection 2 Level-2 products to derive LST and spectral indices. These variables are organized into multi-temporal datasets for subsequent modeling using baseline approaches and deep learning architectures.
+The workflow uses Landsat 8/9 Collection 2 Level-2 products to derive annual LST and spectral indices. These variables are quality-controlled, normalized using training-only statistics, and organized into multi-temporal inputs for deep learning models. The final model configuration incorporates selected interannual climate descriptors derived from NASA POWER as annual regional context.
 
-The repository is intended to improve transparency, reproducibility, and methodological traceability. It does not store large satellite images, raster stacks, tensors, patch datasets, or trained model checkpoints.
+The repository is intended to improve transparency, reproducibility, and methodological traceability. It does not store large satellite images, full-resolution raster stacks, tensor datasets, patch datasets, trained model checkpoints, or full-resolution prediction maps.
 
 ## Study area
 
@@ -16,52 +16,98 @@ The study area corresponds to Barranquilla, Colombia, and its surrounding urban 
 
 The Landsat WRS-2 reference used for the scene inventory is:
 
-```
+```text
 Path: 9
 Row: 52
+```
+
+The operational projected coordinate reference system is:
+
+```text
+EPSG:32618
 ```
 
 ## Temporal scope
 
 The operational period of the Landsat 8/9 workflow is:
 
-```
-2013–2025
+```text
+2013-2025
 ```
 
-The year 2026 is excluded from the operational analysis because the annual period is incomplete.
+The year 2026 is excluded from the operational annual workflow because the annual period is incomplete.
+
+## Temporal formulation
+
+The modeling task is formulated as spatial-temporal regression. The model uses three antecedent annual states to predict the LST of a target year:
+
+```text
+T1 = Y - 3
+T2 = Y - 2
+T3 = Y - 1
+Target = LST(Y)
+```
+
+The final target-year partitioning is:
+
+```text
+Training target years:   2016-2019
+Validation target years: 2020-2022
+Test target years:       2023-2025
+```
+
+Train-only normalization parameters are estimated from the training period only and then fixed for validation and test years.
 
 ## Main methodological components
 
 The workflow is organized around the following components:
 
 1. Landsat 8/9 scene inventory and metadata organization.
-2. Quality masking and valid-pixel control.
-3. LST extraction from Landsat Collection 2 Level-2 products.
-4. Computation of Landsat-derived spectral indices.
-5. Construction of multi-temporal datasets.
-6. Spatial-temporal patch extraction.
-7. Baseline model implementation.
-8. Deep learning model training.
-9. Model evaluation using statistical and spatial metrics.
-10. Generation of prediction maps and spatial diagnostics.
+2. Annual preprocessing of Landsat-derived LST and spectral indices.
+3. Quality control of valid pixels, masks, and annual products.
+4. Train-only normalization of spectral indices and LST.
+5. NASA POWER annual climate forcing table construction and interannual delta derivation.
+6. Multi-temporal tensor construction.
+7. Spatial-temporal patch extraction.
+8. Baseline and deep learning model training.
+9. Model comparison using statistical and spatial metrics.
+10. Prediction maps and spatial diagnostics.
+
+## Final explanatory variables
+
+The Landsat-derived spectral predictors are:
+
+```text
+NDVI, NDMI, NDBI, UI, SAVI, BSI
+```
+
+The final climate predictors retained for the climate-enhanced model are:
+
+```text
+delta_t2m_mean_Y_minus_Yminus1
+delta_solar_radiation_mean_Y_minus_Yminus1
+```
+
+These NASA POWER variables are annual regional descriptors derived for the model-domain centroid. They must not be interpreted as pixel-level climate rasters.
 
 ## Repository structure
 
-```
+```text
 lst-barranquilla-suhi-deep-learning/
-│
-├── configs/                    Configuration files for paths, models, training, and experiments.
+|
+├── configs/                    Configuration files for paths, models, training, and experiment metadata.
 │   ├── experiment_metadata.yml
 │   ├── model_config.yml
 │   ├── paths_example.yml
 │   └── training_config.yml
-│
-├── data/                       Data documentation and lightweight tabular products.
+|
+├── data/                       Lightweight tabular products and data documentation.
 │   ├── README.md
 │   ├── scene_inventory/
-│   └── quality_control/
-│
+│   ├── quality_control/
+│   ├── normalization/
+│   └── climate_forcings/
+|
 ├── docs/                       Methodological and reproducibility documentation.
 │   ├── README.md
 │   ├── data_sources.md
@@ -71,19 +117,19 @@ lst-barranquilla-suhi-deep-learning/
 │   ├── reproducibility_notes.md
 │   ├── repository_status.md
 │   └── figures/
-│       └── quality_control/
-│
-├── notebooks/                  Sequential notebooks for the computational workflow.
+│       ├── quality_control/
+│       ├── normalization/
+│       └── climate_forcings/
+|
+├── notebooks/                  Executable notebooks documenting the workflow.
 │   ├── README.md
 │   ├── notebook_index.md
 │   ├── 01_scene_inventory_landsat_8_9.ipynb
 │   ├── 02_preprocessing_lst_indices.ipynb
-│   └── 03_quality_control.ipynb
-│
-├── outputs/                    Documentation of expected outputs, not heavy model outputs.
-│
-├── src/                        Reusable Python source code.
-│
+│   ├── 03_quality_control.ipynb
+│   └── 04_train_only_normalization.ipynb
+|
+├── src/                        Source-code modules to be added as the workflow is consolidated.
 ├── .gitignore
 ├── CITATION.cff
 ├── LICENSE
@@ -92,59 +138,81 @@ lst-barranquilla-suhi-deep-learning/
 └── requirements.txt
 ```
 
-## Current notebook sequence
+## Included lightweight outputs
 
-The current notebook sequence is documented in:
+The repository may include lightweight CSV, JSON, and PNG products that support reproducibility, including:
 
-```
+- Landsat scene inventory tables.
+- Annual scene-count summaries.
+- Quality-control summaries.
+- Normalization parameters and audits.
+- NASA POWER climate forcing tables and selection traces.
+- Diagnostic figures for quality control, normalization, and climate forcing analysis.
+
+## Data not stored in this repository
+
+The following files are intentionally excluded from GitHub:
+
+- Raw Landsat scenes.
+- Full-resolution GeoTIFF products.
+- Raster stacks.
+- Tensor datasets.
+- Patch datasets.
+- Trained model weights and checkpoints.
+- Full-resolution prediction maps.
+- Temporary preprocessing outputs.
+
+These products should be reconstructed from the documented workflow or stored externally using appropriate research-data infrastructure.
+
+## Notebook sequence
+
+The notebook sequence is documented in:
+
+```text
 notebooks/notebook_index.md
 ```
 
-The first notebook available in the repository is:
+Current completed notebooks include:
 
+```text
+01_scene_inventory_landsat_8_9.ipynb
+02_preprocessing_lst_indices.ipynb
+03_quality_control.ipynb
+04_train_only_normalization.ipynb
 ```
-notebooks/01_scene_inventory_landsat_8_9.ipynb
+
+The next methodological block is:
+
+```text
+05_climate_forcing_integration.ipynb
 ```
 
-This notebook documents the Landsat 8/9 scene inventory for the 2013–2025 operational period.
+This notebook will document the NASA POWER annual climate forcing workflow for 2013-2025.
 
-## Data availability
+## Reproducibility policy
 
-Large geospatial datasets are not stored in this repository.
+The repository prioritizes:
 
-The following files are excluded from version control:
-
-* original Landsat scenes;
-* full-resolution raster stacks;
-* GeoTIFF outputs;
-* tensor datasets;
-* patch datasets;
-* trained model weights;
-* temporary files generated during preprocessing or training.
-
-Lightweight tabular products, such as scene inventories and summary tables, may be included when they improve transparency and reproducibility.
-
-## Computational environment
-
-The workflow is designed for Python-based geospatial and deep learning processing. Environment specifications are provided through:
-
-* `requirements.txt`
-* `environment.yml`
-
-The notebooks may be executed locally, in JupyterLab, or in cloud-based environments such as Google Colab, depending on data availability and computational resources.
-
-## Reproducibility notes
-
-Full reproduction of the workflow requires access to the input satellite imagery, preprocessing outputs, and adequate computational resources.
-
-The repository provides code, configuration files, documentation, notebooks, and lightweight tabular products to support methodological inspection and partial reproducibility.
-
-Some notebooks may require access to Google Earth Engine, Google Drive, or external geospatial datasets. Users should configure their own local or cloud paths using the example files provided in the `configs/` directory.
-
-## License
-
-The code in this repository is released under the MIT License.
+- transparent scene selection;
+- documented preprocessing decisions;
+- train-only normalization;
+- explicit leakage control;
+- reproducible climate-forcing derivation;
+- controlled model comparison;
+- clear separation between lightweight documentation and large computational outputs.
 
 ## Citation
 
-Citation information will be updated once the associated manuscript is submitted or published.
+Citation information is provided in:
+
+```text
+CITATION.cff
+```
+
+## License
+
+License information is provided in:
+
+```text
+LICENSE
+```

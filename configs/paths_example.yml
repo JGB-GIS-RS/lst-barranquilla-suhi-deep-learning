@@ -1,46 +1,51 @@
 # Example path configuration file.
-
-# Copy this file as paths.yml and edit it according to your local or cloud environment.
-
-# Do not commit paths.yml if it contains personal or machine-specific paths.
+# Copy this file as configs/paths.yml and edit it according to your local or cloud environment.
+# Do not commit configs/paths.yml if it contains personal or machine-specific paths.
 
 project:
-name: "lst-barranquilla-suhi-deep-learning"
+  name: "lst-barranquilla-suhi-deep-learning"
 
 repository_paths:
-data_directory: "data"
-scene_inventory: "data/scene_inventory"
-docs: "docs"
-notebooks: "notebooks"
-configs: "configs"
-source_code: "src"
+  data_directory: "data"
+  scene_inventory: "data/scene_inventory"
+  quality_control: "data/quality_control"
+  normalization: "data/normalization"
+  climate_forcings: "data/climate_forcings"
+  docs: "docs"
+  documentation_figures: "docs/figures"
+  quality_control_figures: "docs/figures/quality_control"
+  normalization_figures: "docs/figures/normalization"
+  climate_forcing_figures: "docs/figures/climate_forcings"
+  notebooks: "notebooks"
+  configs: "configs"
+  source_code: "src"
 
 external_paths:
-raw_landsat_data: "/path/to/external/raw_landsat_data"
-processed_rasters: "/path/to/external/processed_rasters"
-climate_forcings: "/path/to/external/climate_forcings"
-tensors: "/path/to/external/tensors"
-patches: "/path/to/external/patches"
-model_checkpoints: "/path/to/external/model_checkpoints"
-prediction_maps: "/path/to/external/prediction_maps"
+  raw_landsat_data: "/path/to/external/raw_landsat_data"
+  annual_raw_composites: "/path/to/external/annual_raw_composites"
+  normalized_rasters: "/path/to/external/normalized_rasters"
+  climate_forcings: "/path/to/external/climate_forcings"
+  tensors: "/path/to/external/tensors"
+  patches: "/path/to/external/patches"
+  model_checkpoints: "/path/to/external/model_checkpoints"
+  prediction_maps: "/path/to/external/prediction_maps"
 
 outputs:
-root: "/path/to/external/outputs"
-figures: "/path/to/external/outputs/figures"
-tables: "/path/to/external/outputs/tables"
-maps: "/path/to/external/outputs/maps"
-logs: "/path/to/external/outputs/logs"
-diagnostics: "/path/to/external/outputs/diagnostics"
+  root: "/path/to/external/outputs"
+  figures: "/path/to/external/outputs/figures"
+  tables: "/path/to/external/outputs/tables"
+  maps: "/path/to/external/outputs/maps"
+  logs: "/path/to/external/outputs/logs"
+  diagnostics: "/path/to/external/outputs/diagnostics"
 
 temporary:
-scratch: "/path/to/external/scratch"
-cache: "/path/to/external/cache"
+  scratch: "/path/to/external/scratch"
+  cache: "/path/to/external/cache"
 
 notes:
-
-* "This is an example configuration file."
-* "Copy this file as configs/paths.yml and edit it for your local, cloud, or Colab environment."
-* "Do not commit configs/paths.yml if it contains personal or machine-specific paths."
-* "Repository paths refer to lightweight files stored in GitHub."
-* "External paths refer to large raster datasets, tensors, patches, model checkpoints, and prediction outputs that are not stored in GitHub."
-* "Large data files should not be stored in the GitHub repository."
+  - "This is an example configuration file."
+  - "Copy this file as configs/paths.yml and edit it for your local, cloud, or Colab environment."
+  - "Do not commit configs/paths.yml if it contains personal or machine-specific paths."
+  - "Repository paths refer to lightweight files stored in GitHub."
+  - "External paths refer to large raster datasets, tensors, patches, model checkpoints, and prediction outputs that are not stored in GitHub."
+  - "Large data files should not be stored in the GitHub repository."
