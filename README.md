@@ -90,6 +90,14 @@ delta_solar_radiation_mean_Y_minus_Yminus1
 
 These NASA POWER variables are annual regional descriptors derived for the model-domain centroid. They must not be interpreted as pixel-level climate rasters.
 
+## Model comparison logic
+
+The repository implements a progressive model comparison design.
+
+Models 1–4 use the same spectral T3 input data, derived from three antecedent years (Y−3, Y−2, Y−1) and six Landsat-based spectral indices per year. These models differ only in architecture, allowing the effect of spatial encoding, temporal recurrence, and channel attention to be evaluated under identical data conditions.
+
+The final model, referred to as the T3-Climate ConvLSTM-SE U-Net, uses the same spectral T3 structure and adds two annual interannual climate predictors derived from NASA POWER: the change in 2-m air temperature and the change in surface solar radiation between Y and Y−1. This final comparison isolates the added value of climate augmentation after the best spectral-temporal architecture has been established.
+
 ## Repository structure
 
 ```text
