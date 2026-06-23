@@ -2,143 +2,242 @@
 
 This document describes the modeling strategy used for spatial-temporal land surface temperature prediction in Barranquilla, Colombia.
 
+The workflow follows a progressive modeling design. First, several spectral-only deep learning models are compared under identical data conditions. Then, the final climate-augmented configuration incorporates interannual NASA POWER climate descriptors to evaluate whether annual climate context improves prediction after the best spectral-temporal architecture has been established.
+
 ## 1. Modeling objective
 
 The modeling task is formulated as a supervised spatial-temporal regression problem.
 
-The objective is to estimate annual land surface temperature from multi-temporal sequences of Landsat-derived spectral variables and, in the final configuration, interannual climate forcings.
+The objective is to estimate annual land surface temperature (LST) from multi-temporal sequences of Landsat-derived spectral variables and, in the final model configuration, from additional interannual climate descriptors derived from NASA POWER.
 
 The target variable is:
 
-* land surface temperature.
+* annual Landsat-derived land surface temperature, represented as train-only normalized LST z-score during model training.
 
-The main input variables are:
+The main predictor variables are:
 
-* Landsat-derived spectral indices;
-* interannual climate forcing variables, if retained in the final model configuration.
+* Landsat-derived annual spectral indices;
+* interannual NASA POWER climate descriptors in the final climate-augmented model.
 
-The model is designed to learn the relationship between antecedent spectral and climatic conditions and the spatial distribution of land surface temperature in the target year.
+The model is designed to learn the relationship between antecedent surface conditions, interannual climate context, and the spatial distribution of LST in the target year.
 
 ## 2. Temporal formulation
 
-The modeling framework uses three antecedent temporal states to predict the land surface temperature of a target year.
+The modeling framework uses a three-year antecedent window, referred to as T3, to predict the LST of a target year.
 
 The temporal formulation is:
 
-```
+```text
 T1 = Y - 3
 T2 = Y - 2
 T3 = Y - 1
 Target = LST(Y)
 ```
 
-Under this structure, the model does not use observed LST from the target year as an input variable.
+For a given target year `Y`, the model uses spectral information from `Y−3`, `Y−2`, and `Y−1`. The observed LST of the target year `Y` is not used as an input predictor.
 
-This formulation allows the network to represent antecedent temporal conditions prior to the prediction year while preserving the spatial structure of urban thermal patterns.
+For example:
 
-## 3. Conceptual tensor structure
+| Target year Y | Antecedent years used as input |
+| ------------: | ------------------------------ |
+|          2016 | 2013, 2014, 2015               |
+|          2017 | 2014, 2015, 2016               |
+|          2018 | 2015, 2016, 2017               |
+|          2019 | 2016, 2017, 2018               |
+|          2020 | 2017, 2018, 2019               |
+|          2021 | 2018, 2019, 2020               |
+|          2022 | 2019, 2020, 2021               |
+|          2023 | 2020, 2021, 2022               |
+|          2024 | 2021, 2022, 2023               |
+|          2025 | 2022, 2023, 2024               |
 
-The model receives a temporal sequence of spatial observations and predicts a land surface temperature field.
+This formulation allows the network to represent antecedent temporal conditions before the prediction year while preserving the spatial structure of urban thermal patterns.
 
-The conceptual input structure is:
+## 3. Data partitioning
 
-```
-samples × time steps × rows × columns × variables
-```
+The operational modeling period is 2013–2025.
 
-The conceptual output structure is:
+The target years are 2016–2025, because each target year requires three antecedent years.
 
-```
-samples × rows × columns × 1
-```
+The temporal split is:
 
-The exact tensor order may vary according to the deep learning framework used, but the dimensional structure must be explicitly documented in the notebooks and source code.
+| Split      | Target years           |
+| ---------- | ---------------------- |
+| Training   | 2016, 2017, 2018, 2019 |
+| Validation | 2020, 2021, 2022       |
+| Test       | 2023, 2024, 2025       |
+
+The year 2026 is excluded from the final annual modeling workflow because it does not represent a complete annual period.
+
+The temporal split is kept fixed across comparable model configurations. This avoids temporal leakage and allows model differences to be interpreted under a consistent validation design.
 
 ## 4. Input variables
 
-The explanatory variables are derived primarily from Landsat surface reflectance bands.
+The spectral predictors are annual Landsat-derived indices calculated from surface reflectance.
 
-Expected spectral variables include:
+The retained spectral variables are:
 
 * NDVI;
-* NDMI or NDWI, according to the final manuscript terminology;
+* NDMI;
 * NDBI;
 * UI;
 * SAVI;
-* BSI, if retained in the final configuration.
+* BSI.
 
-The final input variable set must match the variables reported in the manuscript, the configuration files, and the executed notebooks.
+For each target year, these six indices are extracted for the three antecedent years. Therefore, the spectral-only T3 tensor contains:
 
-Variables should not be included only because they improve apparent accuracy. Their inclusion must be justified by their physical, spectral, or climatic relationship with urban surface thermal behavior.
+```text
+3 antecedent years × 6 spectral indices = 18 spectral channels
+```
 
-## 5. Climate forcing variables
+The climate-augmented tensor adds two NASA POWER interannual climate descriptors:
 
-The final model configuration may incorporate interannual climate forcing variables to contextualize the thermal response observed in the target year.
+* `delta_t2m_mean_Y_minus_Yminus1`;
+* `delta_solar_radiation_mean_Y_minus_Yminus1`.
 
-The retained climate forcings should represent changes in relevant atmospheric or surface-energy conditions, such as:
+These descriptors represent the interannual change between the target year `Y` and the immediately preceding year `Y−1`.
 
-* interannual change in 2 m air temperature;
-* interannual change in surface solar radiation;
-* additional climate variables only if explicitly justified and documented.
+Therefore, the final climate-augmented tensor contains:
 
-These variables must not include observed LST from the target year or previous model predictions as input features.
+```text
+18 spectral channels + 2 climate channels = 20 input channels
+```
 
-The role of climate forcings is to provide contextual information about interannual thermal and radiative variability, not to replace the satellite-derived spatial predictors.
+The two climate channels are annual regional descriptors associated with the model-domain centroid. They are replicated spatially as constant layers only to make them compatible with convolutional tensor processing. They must not be interpreted as spatially distributed climate rasters.
 
-## 6. Target variable
+## 5. Conceptual tensor structure
 
-The target variable is land surface temperature extracted from Landsat Collection 2 Level-2 products.
+The spectral-only tensor contains the antecedent Landsat spectral sequence.
 
-LST must be represented in physical units or transformed using a documented normalization procedure.
+For U-Net and SE U-Net models, the temporal dimension is represented implicitly by stacking all antecedent spectral maps as channels:
 
-If the model is trained with normalized LST values, the inverse transformation must be applied before reporting physical error metrics such as RMSE and MAE in temperature units.
+```text
+batch × 18 × patch_height × patch_width
+```
 
-## 7. Model sequence
+For ConvLSTM-based models, the same spectral information is reorganized explicitly as a temporal sequence:
 
-The modeling strategy compares a sequence of deep learning models with increasing structural complexity.
+```text
+batch × 3 × 6 × patch_height × patch_width
+```
 
-The expected sequence includes:
+where:
 
-* U-Net 2D without explicit temporal memory;
-* ConvLSTM U-Net;
-* ConvLSTM + SE U-Net;
-* final ConvLSTM + SE U-Net with interannual climate forcings.
+```text
+3 = antecedent years: Y−3, Y−2, Y−1
+6 = spectral indices per year
+```
 
-This progressive comparison is intended to evaluate the contribution of:
+The final climate-augmented tensor contains the same spectral T3 information plus two annual climate channels:
+
+```text
+batch × 20 × patch_height × patch_width
+```
+
+Conceptually, this corresponds to:
+
+```text
+18 spectral T3 channels + 2 annual climate channels
+```
+
+During model implementation, the spectral channels may be reshaped into a temporal ConvLSTM input, while the two climate channels may be handled as auxiliary spatially replicated predictors.
+
+The target tensor is:
+
+```text
+batch × 1 × patch_height × patch_width
+```
+
+The associated mask tensor defines valid pixels used for loss and metric calculation.
+
+## 6. Climate forcing variables
+
+The final model configuration incorporates two interannual climate forcing variables derived from NASA POWER Daily API.
+
+NASA POWER variables were first processed as annual regional descriptors associated with the model-domain centroid. Candidate descriptors included annual temperature, solar radiation, precipitation, relative humidity, wind speed, anomalies, and interannual deltas.
+
+The final retained variables are:
+
+```text
+delta_t2m_mean_Y_minus_Yminus1
+delta_solar_radiation_mean_Y_minus_Yminus1
+```
+
+These variables were retained because they are physically interpretable and consistent with the T3 formulation. The model predicts the LST of year `Y` from antecedent surface conditions up to `Y−1`; therefore, interannual changes between `Y` and `Y−1` provide contextual information about annual atmospheric shifts not directly available in the antecedent spectral sequence.
+
+The climate variables do not include observed LST from the target year, previous model predictions, or residuals. Their role is to provide annual climate context, not to replace satellite-derived spatial predictors.
+
+## 7. Target variable
+
+The target variable is annual land surface temperature derived from Landsat Collection 2 Level-2 products.
+
+During training, LST is represented as a z-score normalized variable using parameters estimated from the training period only.
+
+If model evaluation is reported in physical units, the inverse normalization must be applied before computing temperature-based metrics such as RMSE and MAE in degrees Celsius.
+
+The target-year LST is never included as an input predictor.
+
+## 8. Progressive model configurations
+
+The workflow uses a progressive model comparison strategy.
+
+The first four models use exactly the same spectral-only T3 input data. They differ only in architecture. This isolates the contribution of architectural components such as encoder-decoder representation, channel attention, and explicit temporal memory.
+
+The final model introduces two NASA POWER interannual climate predictors. This allows the effect of climate augmentation to be evaluated separately from the effect of architecture.
+
+| Model                                     | Input structure                           | Temporal representation                              | Attention | Climate predictors |
+| ----------------------------------------- | ----------------------------------------- | ---------------------------------------------------- | --------- | ------------------ |
+| Model 1: U-Net baseline                   | 18 spectral channels                      | Implicit temporal stacking                           | No        | No                 |
+| Model 2: SE U-Net                         | 18 spectral channels                      | Implicit temporal stacking                           | Yes       | No                 |
+| Model 3: ConvLSTM U-Net                   | 3 × 6 spectral channels                   | Explicit ConvLSTM sequence                           | No        | No                 |
+| Model 4: ConvLSTM-SE U-Net                | 3 × 6 spectral channels                   | Explicit ConvLSTM sequence                           | Yes       | No                 |
+| Final model: T3-Climate ConvLSTM-SE U-Net | 18 spectral channels + 2 climate channels | Explicit spectral sequence + auxiliary climate input | Yes       | Yes                |
+
+The first four models use exactly the same:
+
+* spectral T3 input data;
+* spatial masks;
+* target variable;
+* train/validation/test years;
+* normalization parameters;
+* loss function;
+* evaluation metrics;
+* early-stopping criterion.
+
+Therefore, their comparison isolates architectural effects.
+
+The final T3-Climate ConvLSTM-SE U-Net model uses the best spectral-temporal architecture and adds two interannual climate predictors derived from NASA POWER. This design evaluates the added value of climate augmentation after the spectral-temporal architecture has been established.
+
+## 9. Model sequence
+
+The model sequence is:
+
+1. U-Net baseline;
+2. SE U-Net;
+3. ConvLSTM U-Net;
+4. ConvLSTM-SE U-Net;
+5. T3-Climate ConvLSTM-SE U-Net.
+
+This progressive comparison evaluates the contribution of:
 
 * spatial encoder-decoder representation;
-* explicit temporal memory;
 * channel-wise recalibration;
+* explicit temporal memory;
 * interannual climate context.
 
-All models must be trained and evaluated using equivalent data partitions, normalization parameters, masks, and evaluation metrics.
+The sequence is designed to avoid conflating architecture improvements with predictor-set changes.
 
-## 8. Proposed deep learning architecture
-
-The proposed architecture is based on a U-Net-like encoder-decoder structure extended with ConvLSTM blocks and channel attention mechanisms.
-
-The architecture combines:
-
-* convolutional encoding blocks;
-* ConvLSTM blocks for temporal dependency modeling;
-* U-Net-like decoding structure;
-* skip connections between encoder and decoder levels;
-* channel attention modules, such as squeeze-and-excitation blocks;
-* interannual climate forcing variables in the final configuration.
-
-The architecture is designed to estimate spatially continuous LST fields from multi-temporal spectral and climatic information.
-
-## 9. U-Net component
+## 10. U-Net component
 
 The U-Net-like structure is used to preserve multi-scale spatial information.
 
 The encoder extracts spatial features at progressively coarser levels, while the decoder reconstructs the prediction at the original spatial resolution.
 
-Skip connections allow the model to recover local spatial detail that could be lost during downsampling.
+Skip connections allow the model to recover local spatial detail that may be lost during downsampling.
 
 This component is important because urban thermal patterns are spatially structured and strongly influenced by surface heterogeneity.
 
-## 10. ConvLSTM component
+## 11. ConvLSTM component
 
 ConvLSTM layers are used to model temporal dependencies while preserving spatial structure.
 
@@ -146,50 +245,49 @@ Unlike fully connected recurrent layers, ConvLSTM operations maintain spatial ne
 
 This is relevant for remote sensing problems because the temporal evolution of urban thermal patterns is spatially structured rather than independent at the pixel level.
 
-In this workflow, ConvLSTM blocks are used to process the antecedent sequence:
+In this workflow, ConvLSTM blocks process the antecedent sequence:
 
-```
+```text
 Y - 3, Y - 2, Y - 1
 ```
 
 and support the prediction of:
 
-```
+```text
 LST(Y)
 ```
 
-## 11. Channel attention component
+## 12. Channel attention component
 
-Channel attention modules may be used to recalibrate feature maps according to their relative contribution to the prediction task.
+Channel attention modules are used to recalibrate feature maps according to their relative contribution to the prediction task.
 
-Squeeze-and-excitation mechanisms are one possible implementation.
+Squeeze-and-excitation mechanisms are one implementation of channel attention.
 
-The inclusion of attention must be justified cautiously. Attention weights may indicate internal feature recalibration, but they are not equivalent to causal explanation or direct physical interpretability.
+The inclusion of attention is interpreted cautiously. Attention weights indicate internal feature recalibration, but they are not equivalent to causal explanation or direct physical interpretability.
 
-In this workflow, SE mechanisms are interpreted as channel-wise recalibration modules that allow the network to modulate internal spectral and climatic representations during learning.
+In this workflow, SE mechanisms are interpreted as channel-wise recalibration modules that allow the network to modulate internal spectral and climate-related representations during learning.
 
-## 12. Baseline and comparison strategy
+## 13. T3-Climate ConvLSTM-SE U-Net model
 
-Baseline and comparison models are required to determine whether the proposed deep learning model provides a meaningful methodological advantage.
+The final model is referred to as the T3-Climate ConvLSTM-SE U-Net model.
 
-The model comparison should include simpler or less complex alternatives, such as:
+This model corresponds to the final climate-augmented configuration selected after the progressive evaluation of spectral-only architectures.
 
-* U-Net 2D without temporal recurrence;
-* ConvLSTM U-Net without SE attention;
-* ConvLSTM + SE U-Net without climate forcings;
-* the final ConvLSTM + SE U-Net with climate forcings.
+It combines:
 
-Additional statistical or machine learning baselines may be included if they are implemented under comparable conditions.
+* the T3 spectral formulation;
+* explicit temporal modeling through ConvLSTM;
+* channel-wise recalibration through SE modules;
+* two interannual NASA POWER climate descriptors.
 
-A deep learning model should not be interpreted as superior unless it demonstrates consistent improvement over simpler alternatives under a controlled validation scheme.
+The final model does not use a different target variable, different masks, or different evaluation years. Its main difference from the spectral-only ConvLSTM-SE U-Net is the addition of two climate predictors.
 
-## 13. Training strategy
+## 14. Training strategy
 
 The training strategy must report:
 
 * training, validation, and test periods;
-* number of scenes used;
-* tensor dimensions;
+* input tensor dimensions;
 * patch size;
 * stride or overlap;
 * batch size;
@@ -197,62 +295,43 @@ The training strategy must report:
 * optimizer;
 * learning rate;
 * loss function;
-* early stopping criteria;
+* early-stopping criteria;
 * hardware used for training.
 
 All training decisions must be reproducible through the notebooks, source code, or configuration files.
-
-## 14. Data partitioning
-
-Data partitioning is critical in spatial-temporal modeling.
-
-A naive random split of patches can inflate performance because neighboring patches are spatially autocorrelated and may share nearly identical information.
-
-The preferred validation strategy should include temporal separation between training, validation, and test periods.
-
-The partitioning strategy must be explicitly documented and consistently used across all models.
-
-The final workflow must clearly identify:
-
-* training years;
-* validation years;
-* test years;
-* temporal sequence construction;
-* target years;
-* masking criteria;
-* normalization parameters.
 
 ## 15. Leakage control
 
 The modeling workflow must avoid information leakage between training, validation, and test datasets.
 
-At minimum, the workflow must ensure that:
+At minimum, the workflow ensures that:
 
 * normalization parameters are estimated using training data only;
-* the target-year LST is not used as an input predictor;
+* target-year LST is not used as an input predictor;
 * validation and test target years are not included in training;
-* model comparison uses the same partitions and masks;
-* climate forcings do not encode the observed LST target variable.
+* model comparison uses fixed partitions and masks;
+* NASA POWER climate forcings do not encode observed LST;
+* model predictions or residuals are not used as input predictors.
 
-Leakage control is essential for producing defensible spatial-temporal prediction results.
+Leakage control is essential for defensible spatial-temporal prediction.
 
 ## 16. Loss function
 
-The loss function should be selected according to the regression objective.
+The loss function is selected according to the regression objective.
 
-Common options include:
+Candidate loss functions include:
 
 * mean squared error;
 * mean absolute error;
 * Huber loss.
 
-If training is performed on normalized LST values, final evaluation must still be reported in physical temperature units after inverse transformation.
+In this workflow, masked loss functions are required because invalid pixels, water pixels, and non-study-domain pixels must not contribute to optimization.
 
-Masked loss functions may be required when invalid pixels or water/non-study pixels are present in the raster domain.
+If training is performed on normalized LST values, final evaluation can be transformed back to physical units for interpretation.
 
 ## 17. Evaluation metrics
 
-Model performance should be evaluated using statistical and spatial diagnostics.
+Model performance is evaluated using statistical and spatial diagnostics.
 
 Recommended metrics include:
 
@@ -260,8 +339,8 @@ Recommended metrics include:
 * MAE;
 * coefficient of determination;
 * bias;
-* residual standard deviation;
 * year-wise performance;
+* split-wise performance;
 * spatial residual patterns.
 
 Numerical metrics alone are insufficient. Spatial residual maps are required to evaluate whether the model systematically fails in specific urban, peri-urban, vegetated, coastal, or water-adjacent areas.
@@ -270,14 +349,18 @@ Numerical metrics alone are insufficient. Spatial residual maps are required to 
 
 Model comparison must be performed under equivalent conditions.
 
-All models should use:
+For the spectral-only model family, all models use the same:
 
-* the same input data where applicable;
-* the same training, validation, and test partitions;
-* the same normalization parameters;
-* comparable evaluation metrics;
-* consistent masking criteria;
-* comparable output domains.
+* spectral input data;
+* patches;
+* masks;
+* train/validation/test split;
+* target variable;
+* normalization parameters;
+* loss function;
+* evaluation metrics.
+
+The final climate-augmented model intentionally changes the predictor set by adding two NASA POWER interannual descriptors. Therefore, it should be interpreted as a second-stage comparison: spectral-only best architecture versus climate-augmented final configuration.
 
 A model with higher apparent accuracy but weaker validation design should not be interpreted as superior.
 
@@ -291,20 +374,22 @@ Expected outputs include:
 * observed versus predicted maps;
 * residual maps;
 * error summary tables;
-* annual or period-based diagnostics;
+* annual diagnostics;
+* spatial diagnostics;
 * hotspot or high-temperature recurrence maps.
 
 Large prediction outputs are not stored in this repository.
 
 ## 20. Uncertainty and limitations
 
-The modeling workflow should acknowledge the following limitations:
+The modeling workflow acknowledges the following limitations:
 
 * Landsat temporal resolution limits the representation of short-term thermal dynamics.
 * Cloud masking reduces the number of valid observations.
 * Cross-sensor differences between Landsat 8 and Landsat 9 may introduce residual inconsistencies.
-* LST is sensitive to acquisition time, surface moisture, atmospheric conditions, and land cover state.
-* Climate forcings provide contextual information but do not fully represent local microclimatic processes.
+* LST is sensitive to acquisition time, surface moisture, atmospheric conditions, and land-cover state.
+* NASA POWER climate forcings are regional annual descriptors and do not represent local microclimatic variability at 30 m resolution.
+* Replicated climate channels are used for tensor compatibility and must not be interpreted as spatially distributed climate observations.
 * Deep learning models may reproduce spatial patterns without necessarily explaining their physical causes.
 * Apparent accuracy can be inflated by spatial autocorrelation if validation is poorly designed.
 
@@ -322,10 +407,25 @@ The final modeling workflow must provide:
 * environment specification;
 * clear instructions for reproducing evaluation tables and figures.
 
-The repository should allow reviewers to inspect the complete computational logic, even if full model training requires external datasets and high-performance computing resources.
+The repository allows reviewers to inspect the computational logic, even if full model training requires external datasets and GPU resources.
 
 ## 22. Current status
 
-This document defines the intended modeling structure for the repository.
+This document reflects the current modeling structure of the repository.
 
-The final version must be updated once the model architecture, hyperparameters, input variable set, climate forcing configuration, training partitions, and evaluation results are fixed in the executed notebooks and manuscript.
+Completed repository modules include:
+
+* scene inventory;
+* annual Landsat preprocessing;
+* quality control;
+* train-only normalization;
+* NASA POWER climate forcing integration;
+* T3-Climate tensor construction.
+
+Subsequent modules will document:
+
+* patch extraction;
+* model training;
+* model evaluation;
+* spatial diagnostics;
+* prediction outputs.
