@@ -1,0 +1,33 @@
+{
+  "complete_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "incomplete_years": [],
+  "operational_years": [
+    2013,
+    2025
+  ],
+  "n_daily_records": 4748,
+  "daily_missing_counts_by_parameter": {
+    "T2M": 0,
+    "T2M_MAX": 0,
+    "T2M_MIN": 0,
+    "ALLSKY_SFC_SW_DWN": 4,
+    "PRECTOTCORR": 0,
+    "RH2M": 0,
+    "WS2M": 0
+  },
+  "decision": "Only complete years are used for annual climate descriptors. The operational workflow is restricted to 2013-2025."
+}

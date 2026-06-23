@@ -1,0 +1,35 @@
+{
+  "source": "NASA POWER Daily API",
+  "base_url": "https://power.larc.nasa.gov/api/temporal/daily/point",
+  "request_params": {
+    "parameters": "T2M,T2M_MAX,T2M_MIN,ALLSKY_SFC_SW_DWN,PRECTOTCORR,RH2M,WS2M",
+    "community": "AG",
+    "longitude": -74.86645650261003,
+    "latitude": 10.975918770497753,
+    "start": "20130101",
+    "end": "20251231",
+    "format": "JSON"
+  },
+  "domain_point": {
+    "latitude": 10.975918770497753,
+    "longitude": -74.86645650261003,
+    "source": "model_domain_reference_centroid",
+    "reference_tif": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/01_aoi_reference/reference_grid/model_domain_reference.tif",
+    "crs_input": "EPSG:32618",
+    "x_center": 514590.0,
+    "y_center": 1213320.0
+  },
+  "parameters": [
+    "T2M",
+    "T2M_MAX",
+    "T2M_MIN",
+    "ALLSKY_SFC_SW_DWN",
+    "PRECTOTCORR",
+    "RH2M",
+    "WS2M"
+  ],
+  "download_or_cache_timestamp_utc": "2026-06-23T17:26:39.294494Z",
+  "methodological_scope": "Annual regional climate descriptors at model-domain centroid; not pixel-level climate rasters.",
+  "requested_url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M%2CT2M_MAX%2CT2M_MIN%2CALLSKY_SFC_SW_DWN%2CPRECTOTCORR%2CRH2M%2CWS2M&community=AG&longitude=-74.86645650261003&latitude=10.975918770497753&start=20130101&end=20251231&format=JSON",
+  "raw_json_path": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_nasa_power_daily_raw_2013_2025.json"
+}

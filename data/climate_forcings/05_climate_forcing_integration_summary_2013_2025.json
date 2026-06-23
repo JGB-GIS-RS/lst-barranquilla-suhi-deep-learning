@@ -1,0 +1,78 @@
+{
+  "module": "05_climate_forcing_integration",
+  "notebook": "05_climate_forcing_integration.ipynb",
+  "source": "NASA POWER Daily API",
+  "operational_period": [
+    2013,
+    2025
+  ],
+  "target_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "domain_point": {
+    "latitude": 10.975918770497753,
+    "longitude": -74.86645650261003,
+    "source": "model_domain_reference_centroid",
+    "reference_tif": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/01_aoi_reference/reference_grid/model_domain_reference.tif",
+    "crs_input": "EPSG:32618",
+    "x_center": 514590.0,
+    "y_center": 1213320.0
+  },
+  "power_parameters": [
+    "T2M",
+    "T2M_MAX",
+    "T2M_MIN",
+    "ALLSKY_SFC_SW_DWN",
+    "PRECTOTCORR",
+    "RH2M",
+    "WS2M"
+  ],
+  "complete_years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "incomplete_years": [],
+  "selected_m5b_climate_inputs": [
+    "delta_t2m_mean_Y_minus_Yminus1",
+    "delta_solar_radiation_mean_Y_minus_Yminus1"
+  ],
+  "not_pixel_level_rasters": true,
+  "methodological_decision": "NASA POWER variables are annual regional descriptors associated with the model-domain centroid. The final M5B model retains only interannual changes in annual mean 2 m air temperature and annual mean surface shortwave radiation. Other climate descriptors are documented as evaluated but not retained.",
+  "outputs": {
+    "domain_point_json": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_domain_climate_point_wgs84.json",
+    "request_metadata_json": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_nasa_power_request_metadata.json",
+    "request_execution_json": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_nasa_power_request_execution_metadata.json",
+    "raw_json": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_nasa_power_daily_raw_2013_2025.json",
+    "daily_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_nasa_power_daily_2013_2025.csv",
+    "availability_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_nasa_power_year_availability_2013_2025.csv",
+    "availability_json": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_nasa_power_year_availability_2013_2025.json",
+    "annual_climate_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_annual_climate_forcing_nasa_power_2013_2025.csv",
+    "anomaly_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_annual_climate_forcing_anomalies_2013_2025.csv",
+    "delta_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_annual_climate_forcing_deltas_2014_2025.csv",
+    "model_inputs_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_model_climate_inputs_selected_m5b_2016_2025.csv",
+    "selection_trace_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_climate_variable_selection_trace_2016_2025.csv",
+    "figures_manifest_csv": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/05_climate_forcing_figures_manifest_2013_2025.csv",
+    "figures_dir": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/00_documentation/quality_control/05_climate_forcing_integration_2013_2025/figures"
+  },
+  "timestamp_utc": "2026-06-23T17:28:43.636239Z"
+}

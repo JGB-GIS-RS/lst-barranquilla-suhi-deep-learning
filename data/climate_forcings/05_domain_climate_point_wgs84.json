@@ -1,0 +1,9 @@
+{
+  "latitude": 10.975918770497753,
+  "longitude": -74.86645650261003,
+  "source": "model_domain_reference_centroid",
+  "reference_tif": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/01_aoi_reference/reference_grid/model_domain_reference.tif",
+  "crs_input": "EPSG:32618",
+  "x_center": 514590.0,
+  "y_center": 1213320.0
+}
