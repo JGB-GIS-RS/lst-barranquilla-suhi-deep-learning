@@ -1,33 +1,38 @@
 # Data
 
-This directory documents the data sources and lightweight tabular products used in the Barranquilla LST/SUHI workflow.
+This directory contains lightweight data products that support the methodological
+inspection, traceability, and partial reproducibility of the Barranquilla LST/SUHI
+workflow.
 
-The repository does not store large geospatial datasets. It may include lightweight CSV, JSON, and metadata products that improve transparency and reproducibility.
+The repository intentionally excludes large geospatial and machine-learning
+artifacts. Only compact tabular, metadata, audit, and diagnostic products are
+included.
 
-## Data scope
+## Study data scope
 
-The study uses Landsat 8/9 Collection 2 Level-2 products to derive annual land surface temperature and spectral indices for Barranquilla, Colombia.
-
-The operational period is:
-
-```text
-2013-2025
-```
-
-The year 2026 is excluded from the operational annual workflow because the annual period is incomplete.
-
-The Landsat WRS-2 reference used for the scene inventory is:
+The study uses Landsat 8 and Landsat 9 Collection 2 Level-2 products to derive
+annual land surface temperature (LST) and six spectral indices for the
+Barranquilla Metropolitan Area, Colombia.
 
 ```text
-Path: 9
-Row: 52
+Operational period: 2013-2025
+Landsat WRS-2 path/row: 009/052
+Projected coordinate reference system: EPSG:32618
 ```
 
-## Expected directory structure
+The year 2026 is excluded because it does not represent a complete annual period
+comparable with the 2013-2025 products.
+
+The spectral variables used in the modeling workflow are:
+
+```text
+NDVI, NDMI, NDBI, UI, SAVI, BSI
+```
+
+## Directory structure
 
 ```text
 data/
-|
 ├── README.md
 ├── scene_inventory/
 ├── quality_control/
@@ -35,67 +40,111 @@ data/
 └── climate_forcings/
 ```
 
-## Scene inventory
+## `scene_inventory/`
 
-The `scene_inventory/` directory contains lightweight tables derived from the Landsat 8/9 scene inventory.
+This directory contains lightweight tables derived from the Landsat 8/9 scene
+inventory. These products document image availability and temporal coverage
+without requiring the original Landsat scenes.
 
-Expected files include:
+The tables may include:
 
-- `scene_inventory_landsat89_2013_2025.csv`
-- `annual_scene_count_landsat89_2013_2025.csv`
-- `monthly_scene_count_landsat89_2013_2025.csv`
+- the complete 2013-2025 scene inventory;
+- annual scene counts;
+- monthly scene counts;
+- selected acquisition metadata.
 
-These files allow reviewers to inspect temporal availability without downloading large raster datasets.
+## `quality_control/`
 
-## Quality control
+This directory contains compact reports generated during the quality-control
+workflow. Depending on the processing stage, these reports document:
 
-The `quality_control/` directory contains lightweight reports produced by the quality-control workflow.
+- file availability;
+- raster geometry and grid consistency;
+- valid-pixel counts and fractions;
+- land-domain and common-valid-mask summaries;
+- annual LST and spectral-index audits;
+- detection of missing, inconsistent, or anomalous products.
 
-These reports document file existence, geometry consistency, valid-pixel availability, land-domain masks, common valid masks, and annual product audits.
+These reports support inspection of the preprocessing chain but do not replace
+the full-resolution raster products used in the analysis.
 
-## Normalization
+## `normalization/`
 
-The `normalization/` directory contains train-only normalization parameters and audit tables.
+This directory contains parameters and audit products associated with train-only
+normalization.
 
-Expected products include:
+The workflow uses:
 
-- normalization parameters for LST and spectral indices;
-- geometry and file-existence audits;
-- normalized-product value summaries;
-- train spatial mask summaries;
-- JSON summaries supporting reproducibility.
+- global z-score normalization for LST, with parameters estimated only from the
+  training target years;
+- robust min-max normalization for the spectral indices, using training-only
+  percentile limits;
+- fixed parameters applied without recalibration to validation and test data.
 
-## Climate forcings
+The directory may include normalization parameters, JSON summaries, value-range
+audits, geometry checks, and spatial-mask summaries.
 
-The `climate_forcings/` directory is reserved for lightweight annual NASA POWER climate forcing tables and diagnostics.
+## `climate_forcings/`
 
-NASA POWER variables are treated as annual regional descriptors associated with the model-domain centroid. They are not pixel-level spatial rasters.
+This directory contains lightweight annual NASA POWER tables and related
+diagnostics used to construct the regional climate-radiative descriptors
+associated with the target year.
 
-Expected products include annual climate tables, interannual deltas, selected climate input variables for the final model, and variable-selection traces.
+The public folder name `climate_forcings` is retained for consistency with the
+notebooks and repository history. Scientifically, these variables are treated as
+annual regional descriptors for the model-domain centroid, not as spatially
+distributed climate fields or pixel-level rasters.
+
+The final M5 configuration uses:
+
+```text
+delta_t2m_mean_Y_minus_Yminus1
+delta_solar_radiation_mean_Y_minus_Yminus1
+```
+
+The directory may include:
+
+- annual NASA POWER summaries;
+- interannual differences;
+- normalized descriptor tables;
+- exploratory climate-error diagnostics;
+- records supporting the retained M5 inputs.
 
 ## Data not stored in this repository
 
-Large geospatial and machine-learning products are not stored in this repository, including:
+The following products are intentionally excluded because of file size,
+computational cost, licensing, or storage considerations:
 
 - original Landsat scenes;
-- full-resolution GeoTIFF products;
-- raster stacks;
+- full-resolution annual GeoTIFF products;
+- raster stacks and aligned multi-year cubes;
 - tensor datasets;
 - patch datasets;
-- trained model weights;
-- model checkpoints;
-- large prediction maps;
-- temporary preprocessing outputs.
+- trained model weights and checkpoints;
+- full-resolution prediction and residual maps;
+- temporary preprocessing and intermediate files.
 
-These files should be reconstructed from the documented workflow or stored externally.
+These exclusions are deliberate and do not indicate missing repository content.
+The public release is designed to document the scientific workflow and provide
+the lightweight evidence needed to inspect its principal processing and modeling
+decisions.
 
-## Reconstruction workflow
+## Reproducibility scope
 
-Data reconstruction instructions are documented in:
+The files in this directory support methodological verification and partial
+reproducibility. Complete regeneration of the analysis requires external access
+to the original satellite data, the large intermediate products, adequate storage,
+and suitable computational resources.
+
+The corresponding reconstruction logic and execution sequence are documented in:
 
 ```text
 docs/data_sources.md
 docs/preprocessing.md
 docs/workflow.md
+notebooks/README.md
 notebooks/notebook_index.md
 ```
+
+The notebooks and manuscript remain the authoritative descriptions of the
+implemented workflow.
