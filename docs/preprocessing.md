@@ -1,183 +1,316 @@
 # Preprocessing
 
-This document describes the preprocessing workflow used to prepare Landsat-derived variables for surface urban heat modeling in Barranquilla, Colombia.
+This document describes the implemented preprocessing workflow used to generate
+annual, spatially harmonized Landsat-derived predictors and target variables for
+the Barranquilla LST/SUHI modeling framework.
 
-## 1. General preprocessing objective
+The public preprocessing workflow covers Landsat scene selection, quality
+screening, physical-unit conversion, annual compositing, spectral-index
+generation, grid harmonization, terrestrial-domain restriction, train-only
+normalization, and quality-control reporting.
 
-The objective of preprocessing is to generate spatially aligned, quality-controlled raster layers suitable for multi-temporal dataset construction and deep learning model training.
+## 1. Processing objective
 
-The preprocessing workflow produces two main groups of variables:
+The preprocessing stage produces annual raster variables that are geometrically
+consistent, radiometrically valid, and suitable for T3 tensor construction and
+deep-learning model training.
 
-* land surface temperature;
-* spectral indices derived from Landsat surface reflectance bands.
+The two principal data groups are:
 
-## 2. Satellite products
+- annual land surface temperature (LST), used as the target variable;
+- annual Landsat-derived spectral indices, used as explanatory variables.
 
-The workflow is based on Landsat 8/9 Collection 2 Level-2 products.
+The workflow is designed to preserve pixel-to-pixel correspondence across years
+and to prevent information from validation or test periods from entering the
+normalization stage.
 
-The satellite collections considered in the workflow are:
+## 2. Landsat products
 
-```
+The workflow uses Landsat 8 and Landsat 9 Collection 2 Level-2 Science Products:
+
+```text
 LANDSAT/LC08/C02/T1_L2
 LANDSAT/LC09/C02/T1_L2
 ```
 
 These products provide:
 
-* surface reflectance bands;
-* land surface temperature products;
-* quality assessment bands.
+- atmospherically corrected surface reflectance;
+- operational land surface temperature;
+- `QA_PIXEL` quality flags;
+- `QA_RADSAT` radiometric-saturation flags.
 
-Using Level-2 products reduces the need for manually implementing atmospheric correction, although quality masking, spatial harmonization, and consistency checks are still required.
+The analysis is restricted to Landsat 8/9 to maintain sensor-family consistency
+throughout the 2013-2025 operational period.
 
 ## 3. Spatial and temporal scope
 
-The study area corresponds to Barranquilla, Colombia, including its urban and peri-urban surroundings.
-
-The Landsat WRS-2 reference used for the scene inventory is:
-
-```
-Path: 9
-Row: 52
-```
-
-The operational period of the workflow is:
-
-```
-2013–2025
+```text
+Study domain: Barranquilla Metropolitan Area and surrounding urban-peri-urban domain
+WRS-2 path/row: 009/052
+Operational period: 2013-2025
+Projected CRS: EPSG:32618
+Nominal spatial resolution: 30 m
 ```
 
-The year 2026 is excluded from the operational analysis because the annual period is incomplete.
+The year 2026 is excluded because it does not represent a complete annual period
+comparable with the preceding years.
 
-## 4. Spatial subset and grid consistency
+## 4. Physical-unit conversion
 
-All scenes must be clipped to the Barranquilla study area and its surrounding urban and peri-urban environment.
+Surface-reflectance bands and the Landsat thermal product were transformed using
+the official Collection 2 scale factors and offsets before spectral-index
+calculation and annual compositing.
 
-All output rasters must share:
+LST was converted to degrees Celsius before normalization.
 
-* the same coordinate reference system;
-* the same spatial resolution;
-* the same grid alignment;
-* the same spatial extent;
-* the same valid-pixel mask logic.
+The physical-unit conversion is implemented in:
 
-Spatial misalignment between dates can introduce artificial temporal change and must be corrected before temporal stacking, tensor construction, or patch extraction.
+```text
+notebooks/02_preprocessing_lst_indices.ipynb
+```
 
-## 5. Quality masking
+## 5. Quality assurance and valid-observation screening
 
-Quality masking is applied before computing spectral indices and before constructing temporal datasets.
+The valid-observation domain combines atmospheric quality, radiometric validity,
+and effective data availability.
 
-The masking procedure should remove pixels affected by:
+The preprocessing workflow excludes observations flagged as:
 
-* fill values;
-* clouds;
-* cloud shadows;
-* cirrus contamination, when available;
-* invalid observations;
-* saturated or otherwise unreliable pixels, when relevant;
-* pixels outside the valid study area.
+- fill;
+- dilated cloud;
+- cloud;
+- cloud shadow;
+- snow or ice;
+- radiometrically saturated.
 
-For Landsat Collection 2 Level-2 products, the masking procedure should be based on the QA bands provided with each scene, especially `QA_PIXEL`.
+Atmospheric screening is derived from `QA_PIXEL`, while radiometric saturation is
+screened using `QA_RADSAT`.
 
-The exact bitwise implementation must be reported in the preprocessing notebook or source code.
+Final validity also requires effective availability of the surface-reflectance
+bands and LST after clipping, reprojection, resampling, and grid harmonization.
+Therefore, a pixel is accepted only when the required predictor and target values
+are physically available and not coded as NoData.
 
-## 6. Land surface temperature
+The exact masking logic is implemented and audited in:
 
-Land surface temperature is used as the target variable of the modeling workflow.
+```text
+notebooks/02_preprocessing_lst_indices.ipynb
+notebooks/03_quality_control.ipynb
+```
 
-LST is extracted from the Landsat Collection 2 Level-2 thermal product and converted to physical temperature units according to the scale factors and offsets defined for the product.
+## 6. Annual compositing
 
-All LST layers must be checked for:
+The workflow generates one annual product per variable for each year from 2013
+through 2025.
 
-* valid physical range;
-* missing values;
-* spatial artifacts;
-* abnormal scene-level statistics;
-* consistency across Landsat 8 and Landsat 9;
-* consistency across years in the 2013–2025 operational period.
+For every variable, valid scene-level observations are aggregated using a
+pixel-wise annual median.
 
-## 7. Surface reflectance and spectral indices
+A pixel is accepted in an annual composite only when at least two valid
+observations are available for that year.
 
-Spectral indices are computed from surface reflectance bands after masking invalid pixels.
+Annual valid-observation count layers are generated as diagnostics for:
 
-The expected spectral indices include:
+- LST;
+- the spectral-index group.
 
-* NDVI;
-* NDMI or NDWI, according to the final manuscript terminology;
-* NDBI;
-* UI;
-* SAVI;
-* BSI, if retained in the final model configuration.
+The annual composites are interpreted as comparable annual surface states. They
+do not represent daily extremes, intra-seasonal thermal variability, or
+short-duration atmospheric events.
 
-The final list of indices must match the manuscript, notebooks, and model input configuration.
+## 7. Spectral indices
 
-## 8. Cross-sensor consistency
+The final predictor set is fixed and consists of:
 
-Because the workflow uses Landsat 8 and Landsat 9, cross-sensor consistency must be considered.
+```text
+NDVI, NDMI, NDBI, UI, SAVI, BSI
+```
 
-The workflow must account for differences or residual inconsistencies between:
+The indices represent the following surface-response domains:
 
-* Landsat 8 OLI/TIRS;
-* Landsat 9 OLI-2/TIRS-2.
+- `NDVI`: vegetation vigor and photosynthetically active cover;
+- `NDMI`: vegetation/canopy moisture and water-stress response;
+- `NDBI`: built-up and impervious-surface response;
+- `UI`: urban spectral response with emphasis on SWIR2;
+- `SAVI`: vegetation response adjusted for soil background;
+- `BSI`: bare-soil and exposed-surface response.
 
-Potential issues include differences in spectral response, thermal calibration, acquisition conditions, and scene availability.
+The NIR-SWIR1 moisture index is reported as `NDMI`, not `NDWI`, to distinguish it
+from the Green-NIR water index commonly used for open-water detection.
 
-The use of Landsat 8/9 only helps reduce cross-sensor heterogeneity compared with workflows that combine older Landsat missions.
+The six indices are retained as joint predictors. No univariate feature-selection
+step is applied before deep-learning model training.
 
-## 9. Normalization
+## 8. Spatial harmonization
 
-Normalization parameters must be estimated using training data only.
+All annual products are aligned to a common canonical raster grid.
 
-This is required to avoid information leakage between training, validation, and test datasets.
+The harmonized products share:
 
-The recommended strategy is:
+- coordinate reference system;
+- spatial resolution;
+- spatial extent;
+- affine transform;
+- pixel alignment;
+- NoData convention.
 
-* robust min-max scaling for spectral indices;
-* standardization of LST using training-period statistics.
+Residual geometric discrepancies are corrected against the canonical reference
+grid using controlled clipping, extent adjustment, reprojection, or resampling.
 
-All normalization parameters must be stored or documented to allow reproducible inference.
+Continuous variables are resampled using bilinear interpolation. Discrete count
+layers are handled using nearest-neighbor resampling.
 
-## 10. Output products
+The spatial harmonization ensures strict correspondence across variables and
+years before T3 tensor construction.
 
-The preprocessing stage should produce spatially consistent raster layers for each retained acquisition date.
+## 9. Terrestrial modeling domain
 
-Expected outputs include:
+The modeling domain is restricted to valid terrestrial surfaces.
 
-* masked LST raster;
-* masked spectral index rasters;
-* valid-pixel mask;
-* metadata table;
-* quality-control summary.
+Open-water and structurally non-land areas are excluded to avoid mixing distinct
+land and water thermal regimes.
 
-Large preprocessing outputs are not stored in this GitHub repository.
+The final terrestrial domain combines:
 
-Only lightweight tabular products may be included when they improve transparency and reproducibility.
+- the annual valid-observation masks;
+- the structural land-domain mask;
+- the effective availability of spectral predictors;
+- the effective availability of target-year LST.
 
-## 11. Quality control
+Pixels outside this domain may remain geometrically present inside rectangular
+patches but are excluded from optimization and evaluation through binary masks.
 
-Each preprocessed scene should be evaluated using summary diagnostics, including:
+## 10. Train-only normalization
 
-* valid-pixel percentage;
-* minimum, maximum, mean, and standard deviation of LST;
-* spectral index ranges;
-* spatial distribution of valid and invalid pixels;
-* visual inspection of masks;
-* detection of anomalous scenes.
+Normalization parameters are estimated exclusively from the training data and
+then frozen for validation and test years.
 
-Scenes failing quality-control criteria should be excluded or explicitly flagged.
+### 10.1 LST target
 
-## 12. Reproducibility notes
+LST is normalized using a global z-score:
 
-The preprocessing workflow must be implemented in executable notebooks and reusable source-code modules.
+```text
+LST_z = (LST - mu_train) / sigma_train
+```
 
-The corresponding preprocessing notebook should document:
+The parameters are estimated only from valid target-year LST observations for:
 
-* input scene inventory;
-* masking logic;
-* LST scaling and unit conversion;
-* spectral index formulas;
-* output paths;
-* quality-control criteria;
-* excluded scenes, when applicable.
+```text
+Training target years: 2016-2019
+```
 
-Full preprocessing reproduction requires access to the original Landsat 8/9 Collection 2 Level-2 products and adequate geospatial processing resources.
+The same `mu_train` and `sigma_train` values are applied without recalibration to
+validation and test targets.
+
+### 10.2 Spectral predictors
+
+Each spectral index is transformed to `[0, 1]` using robust train-only percentile
+limits:
+
+```text
+p2.5 and p97.5
+```
+
+Because the training targets are 2016-2019 under the T3 formulation, the
+antecedent predictor years used to estimate the spectral scaling parameters are:
+
+```text
+2013-2018
+```
+
+Values outside the retained percentile interval are clipped to the valid
+normalized range.
+
+### 10.3 Climate-radiative descriptors
+
+The two descriptors used by M5 are normalized using parameters estimated only
+from the training target years:
+
+```text
+2016-2019
+```
+
+No validation or test year contributes to the estimation of normalization
+parameters.
+
+The normalization workflow is implemented and audited in:
+
+```text
+notebooks/04_train_only_normalization.ipynb
+notebooks/05_climate_forcing_integration.ipynb
+```
+
+## 11. Quality-control products
+
+The preprocessing workflow generates compact audit products that document:
+
+- scene and file availability;
+- raster dimensions and geometry;
+- CRS and transform consistency;
+- valid-pixel counts and fractions;
+- annual observation density;
+- physical-value ranges;
+- normalized-value ranges;
+- missing or inconsistent products;
+- mask and land-domain consistency.
+
+Lightweight CSV, JSON, and PNG summaries are stored under:
+
+```text
+data/quality_control/
+data/normalization/
+docs/figures/quality_control/
+docs/figures/normalization/
+```
+
+These files support methodological inspection but do not replace the
+full-resolution rasters used in the computational workflow.
+
+## 12. Main outputs
+
+The preprocessing stage produces external annual raster products for:
+
+```text
+LST
+NDVI
+NDMI
+NDBI
+UI
+SAVI
+BSI
+valid-observation counts
+validity masks
+```
+
+It also produces the frozen train-only normalization parameters required for
+tensor construction, model training, evaluation, and inverse transformation to
+physical units.
+
+The large annual GeoTIFFs, aligned raster stacks, and normalized full-resolution
+products are intentionally excluded from GitHub.
+
+## 13. Reproducibility boundary
+
+The authoritative preprocessing implementations are:
+
+```text
+notebooks/01_scene_inventory_landsat_8_9.ipynb
+notebooks/02_preprocessing_lst_indices.ipynb
+notebooks/03_quality_control.ipynb
+notebooks/04_train_only_normalization.ipynb
+```
+
+The public repository supports methodological inspection, traceability, and
+partial reproducibility.
+
+Complete regeneration requires:
+
+- access to Landsat 8/9 Collection 2 Level-2 products;
+- access to the study-domain geometry and canonical grid;
+- adequate geospatial storage;
+- a compatible Python/Google Earth Engine environment;
+- sufficient computational resources for annual raster processing.
+
+The notebooks and manuscript remain the authoritative descriptions of the
+implemented preprocessing workflow.
