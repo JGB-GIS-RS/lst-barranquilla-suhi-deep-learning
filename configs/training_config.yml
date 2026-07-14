@@ -1,111 +1,226 @@
-# Training configuration for the Barranquilla LST/SUHI workflow.
+# Training configuration reference for the Barranquilla LST/SUHI workflow.
+#
+# This file documents the settings implemented in the public training notebooks.
+# It is not automatically loaded by every notebook. The executed notebooks remain
+# the authoritative implementation.
 
-training:
-  task: "spatial_temporal_regression"
-  loss_function: "mean_squared_error"
-  masked_loss: true
-  optimizer: "adam"
-  learning_rate: null
-  batch_size: null
-  epochs: null
-  early_stopping: true
-  early_stopping_patience: null
-  reduce_lr_on_plateau: true
-  reduce_lr_patience: null
-  minimum_learning_rate: null
+configuration_role:
+  type: "reference_record"
+  runtime_authoritative: false
+  authoritative_source:
+    - "notebooks/08A_train_M1_unet_baseline.ipynb"
+    - "notebooks/08B_train_M2_se_unet.ipynb"
+    - "notebooks/08C_train_M3_convlstm_unet_v5_2016_2025_dirfix.ipynb"
+    - "notebooks/08D_train_M4_convlstm_se_unet.ipynb"
+    - "notebooks/08E_train_M5_t3_climate_convlstm_se_unet.ipynb"
 
-temporal_formulation:
-  input_states:
-    - label: "T1"
-      year_offset: -3
-      description: "Antecedent state Y-3"
-    - label: "T2"
-      year_offset: -2
-      description: "Antecedent state Y-2"
-    - label: "T3"
-      year_offset: -1
-      description: "Antecedent state Y-1"
-  target:
-    label: "Y"
-    variable: "LST"
-    description: "Land surface temperature at target year Y"
-    target_year_lst_as_input: false
+task:
+  name: "supervised_spatiotemporal_regression"
+  target: "Annual Landsat-derived LST at target year Y"
+  target_training_scale: "Train-only normalized z-score"
+  physical_reporting_units: "degrees Celsius"
+  temporal_formulation: "Y-3, Y-2, Y-1 -> LST(Y)"
 
 data_partitioning:
-  strategy: "temporal_holdout"
-  normalization_train_period: "2013-2019"
-  target_train_years:
+  strategy: "Target-year temporal holdout"
+  assignment_stage: "Before patch extraction"
+  training_target_years:
     - 2016
     - 2017
     - 2018
     - 2019
-  target_validation_years:
+  validation_target_years:
     - 2020
     - 2021
     - 2022
-  target_test_years:
+  test_target_years:
     - 2023
     - 2024
     - 2025
-  temporal_holdout: true
-  spatial_holdout: "structured_blocks_when_applicable"
   random_patch_split: false
-  description: "Training, validation, and test partitions are separated by target year to reduce temporal leakage."
+  independent_spatial_block_holdout: false
+  interpretation: "Temporally controlled retrospective evaluation over a shared geographic domain."
+
+patch_reference:
+  patch_height_pixels: 128
+  patch_width_pixels: 128
+  training_stride_pixels: 64
+  validation_stride_pixels: 128
+  test_stride_pixels: 128
+  minimum_valid_pixel_fraction: 0.70
+  training_overlap: true
+  validation_overlap: false
+  test_overlap: false
+  validity_mask_role: "Exclude invalid, water, non-land, and unavailable pixels from loss and metric calculations."
+  validity_mask_used_as_predictor: false
+  archive_note: "Training notebooks consume archived external patch datasets from the reference experiment; large patch archives are not stored in GitHub."
 
 normalization:
-  spectral_indices: "train_only_robust_min_max"
-  lst: "train_only_global_z_score"
-  climate_forcings: "train_only_standardization_when_required"
+  strategy: "Train-only parameter estimation with fixed application to validation and test data"
+  spectral_indices:
+    method: "Robust percentile-based min-max scaling"
+    variables:
+      - "NDVI"
+      - "NDMI"
+      - "NDBI"
+      - "UI"
+      - "SAVI"
+      - "BSI"
+  lst:
+    method: "Global z-score"
+  climate_radiative_descriptors:
+    method: "Training-period standardization in the archived M5 dataset"
   leakage_control:
-    normalization_parameters_from_training_only: true
-    validation_data_used_for_normalization: false
-    test_data_used_for_normalization: false
+    validation_statistics_used_for_parameter_estimation: false
+    test_statistics_used_for_parameter_estimation: false
+  historical_artifact_note: "Public reconstruction products and archived reference-experiment patches may retain slightly different historical parameter records. Experiment-specific values used for evaluation are preserved in the corresponding notebooks and outputs."
 
 input_control:
-  allowed_input_groups:
-    - "landsat_spectral_indices"
-    - "observation_quality_mask"
-    - "interannual_climate_forcings"
-  prohibited_input_variables:
-    - "observed_LST_target_year"
-    - "predicted_LST_previous_models"
-    - "future_spectral_indices"
-  climate_forcings_use_observed_target_lst: false
+  M1_to_M4:
+    allowed_predictors:
+      - "Three antecedent annual states of NDVI, NDMI, NDBI, UI, SAVI, and BSI"
+  M5:
+    allowed_predictors:
+      - "Three antecedent annual states of NDVI, NDMI, NDBI, UI, SAVI, and BSI"
+      - "delta_t2m_mean_Y_minus_Yminus1"
+      - "delta_solar_radiation_mean_Y_minus_Yminus1"
+  prohibited_predictors:
+    - "Observed target-year LST"
+    - "Antecedent LST maps"
+    - "Predictions from previous models"
+    - "Model residuals"
+    - "Validation or test target LST"
+  climate_radiative_spatial_support: "Annual regional descriptors for the model-domain centroid"
+  climate_radiative_pixel_level_fields: false
 
-climate_forcings:
-  source: "NASA POWER Daily API"
-  candidate_variables_evaluated: true
-  retained_variables:
-    - "delta_t2m_mean_Y_minus_Yminus1"
-    - "delta_solar_radiation_mean_Y_minus_Yminus1"
-  note: "Retained variables must be interpreted as annual regional interannual context, not as pixel-level forcings."
+optimization:
+  optimizer: "AdamW"
+  initial_learning_rate: 0.001
+  weight_decay: 0.00001
+  loss:
+    name: "Masked Huber loss"
+    delta: 1.0
+    valid_pixels_only: true
+  gradient_clipping:
+    enabled: true
+    maximum_norm: 1.0
+  learning_rate_scheduler:
+    name: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.5
+    patience_epochs: 5
+    monitored_quantity: "Validation loss"
+  checkpointing:
+    criterion: "Minimum validation loss"
+    test_used_for_selection: false
+
+model_specific_training:
+  M1:
+    batch_size: 4
+    maximum_epochs: 100
+    early_stopping_patience_epochs: 15
+    random_seed: 42
+    num_workers: 0
+    pin_memory: false
+  M2:
+    batch_size: 4
+    maximum_epochs: 100
+    early_stopping_patience_epochs: 15
+    random_seed: 42
+    num_workers: 0
+    pin_memory: false
+  M3:
+    batch_size: 4
+    maximum_epochs: 100
+    early_stopping_patience_epochs: 15
+    random_seed: 42
+    num_workers: 0
+    pin_memory: false
+  M4:
+    batch_size: 4
+    maximum_epochs: 100
+    early_stopping_patience_epochs: 15
+    random_seed: 42
+    num_workers: 0
+    pin_memory: false
+  M5:
+    batch_size: 8
+    maximum_epochs: 120
+    early_stopping_patience_epochs: 18
+    random_seed: 20260530
+    num_workers: 0
+    pin_memory: false
+    historical_internal_label: "M5B"
+
+validation_and_test_use:
+  validation:
+    - "Learning-rate scheduling"
+    - "Early stopping"
+    - "Checkpoint selection"
+  test:
+    - "Final retrospective evaluation"
+    - "Split-wise and target-year metric reporting"
+  test_not_used_for:
+    - "Weight optimization"
+    - "Checkpoint selection"
+    - "Early stopping"
+    - "Learning-rate scheduling"
+    - "Hyperparameter tuning"
 
 evaluation:
   metrics:
     - "RMSE"
     - "MAE"
+    - "Bias"
     - "R2"
-    - "bias"
-    - "residual_standard_deviation"
-  diagnostics:
-    - "year_wise_metrics"
-    - "observed_vs_predicted_maps"
-    - "residual_maps"
-    - "spatial_error_patterns"
-  report_units: "degrees Celsius after inverse transformation"
+    - "Valid-pixel count"
+  aggregation: "Sufficient statistics accumulated over all valid pixels in each split or target year"
+  reporting_levels:
+    - "Training, validation, and test splits"
+    - "Target year"
+    - "Aggregated TEST period"
+  reporting_scales:
+    - "Normalized LST units"
+    - "Degrees Celsius after inverse transformation"
+  spatial_diagnostics:
+    - "Observed-versus-predicted maps"
+    - "Residual maps"
+    - "Agreement plots"
+    - "Illustrative local zoom windows"
 
 model_comparison:
-  same_partitions_across_models: true
-  same_normalization_across_models: true
-  same_masking_across_models: true
-  same_evaluation_metrics_across_models: true
+  M1_to_M4:
+    same_spectral_predictor_content: true
+    same_target_year_partitions: true
+    same_validity_mask_role: true
+    same_loss_definition: true
+    same_optimizer_family: true
+    same_checkpoint_criterion: true
+    interpretation: "Controlled comparison of spectral-input architectures."
+  M4_to_M5:
+    same_predictor_set: false
+    same_training_protocol: false
+    interpretation: "Comparison between complete experimental configurations, not a pure climate-radiative ablation."
 
-hardware:
-  gpu: null
-  environment: null
-  runtime: null
+climate_diagnostic_interpretation:
+  retained_M5_descriptors:
+    - "delta_t2m_mean_Y_minus_Yminus1"
+    - "delta_solar_radiation_mean_Y_minus_Yminus1"
+  selection_basis: "Physical consistency and development-stage diagnostics"
+  full_period_tables: "Descriptive post hoc audits"
+  full_period_tables_used_for_checkpoint_selection: false
+  full_period_tables_used_for_hyperparameter_tuning: false
+  full_period_tables_used_to_optimize_TEST_performance: false
+
+execution_environment:
+  primary_environment: "Google Colab-compatible Python environment"
+  device_selection: "CUDA GPU when available; CPU fallback"
+  external_storage: "Google Drive or adapted local/cloud paths"
+  fixed_gpu_model_required: false
+  path_adaptation_required: true
 
 notes:
-  - "Random patch-level splitting can inflate performance due to spatial autocorrelation."
-  - "Evaluation metrics should be reported in physical LST units after inverse transformation when normalized LST is used during training."
-  - "Final hyperparameters should be filled after the executed training workflow is fixed."
+  - "Random patch-level reassignment across temporal splits is not used."
+  - "The temporal holdout is not an independent spatial-block validation."
+  - "Historical external archive names are retained for traceability."
+  - "The notebooks and stored experiment outputs take precedence over this reference YAML if a discrepancy is found."
