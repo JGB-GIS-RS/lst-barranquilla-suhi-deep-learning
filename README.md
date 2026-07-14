@@ -1,4 +1,4 @@
-# lst-barranquilla-suhi-deep-learning
+# LST-Barranquilla-SUHI-deep-learning
 
 Computational notebooks supporting annual land surface temperature (LST) modeling in the Barranquilla Metropolitan Area, Colombia, using Landsat 8/9 Collection 2 Level-2 products, train-only normalization, regional climate-radiative descriptors derived from NASA POWER, and U-Net-based spatiotemporal deep learning models.
 
