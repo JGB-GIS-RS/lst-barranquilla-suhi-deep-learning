@@ -1,169 +1,302 @@
 # Reproducibility notes
 
-This document describes the reproducibility scope, computational requirements, and limitations of the repository.
+This document defines the reproducibility scope, computational requirements, and
+explicit limitations of the public Barranquilla LST/SUHI repository.
 
 ## 1. Reproducibility objective
 
-The objective of this repository is to provide a transparent and traceable computational workflow for modeling land surface temperature and surface urban heat patterns in Barranquilla, Colombia.
+The repository provides a transparent and traceable computational record for the
+implemented retrospective modeling workflow based on:
 
-The workflow is based on Landsat 8/9 Collection 2 Level-2 products for the 2013–2025 operational period.
+- Landsat 8/9 Collection 2 Level-2 products;
+- annual LST and spectral-index products;
+- train-only normalization;
+- regional climate-radiative descriptors derived from NASA POWER;
+- T3 tensor construction;
+- deep-learning models M1-M5;
+- statistical and spatial evaluation.
 
-The repository is intended to allow users and reviewers to inspect:
+The operational Landsat period is:
 
-* the methodological workflow;
-* the Landsat 8/9 scene inventory;
-* data reconstruction logic;
-* preprocessing procedures;
-* model configuration;
-* training and evaluation strategy;
-* expected outputs.
-
-## 2. What is included
-
-This repository includes or will include:
-
-* methodological documentation;
-* executable notebooks;
-* reusable source code;
-* configuration files;
-* environment specifications;
-* lightweight tabular products;
-* lightweight examples, if needed.
-
-The repository already includes the Landsat 8/9 scene inventory and summary tables for the 2013–2025 operational period.
-
-The repository is structured to make the computational logic explicit and auditable.
-
-## 3. What is not included
-
-Large files are not stored in this GitHub repository.
-
-The following files are excluded:
-
-* original Landsat scenes;
-* full-resolution GeoTIFF files;
-* raster stacks;
-* temporal tensors;
-* extracted patch datasets;
-* trained model weights;
-* model checkpoints;
-* large prediction maps;
-* temporary processing outputs.
-
-These files must be reconstructed from the documented workflow or stored externally using an appropriate storage system.
-
-## 4. Data reconstruction
-
-The input dataset must be reconstructed from Landsat 8/9 Collection 2 Level-2 products.
-
-The operational period is:
-
-```
-2013–2025
+```text
+2013-2025
 ```
 
-The year 2026 is excluded from the operational analysis because the annual period is incomplete.
+The year 2026 is excluded because it does not represent a complete annual period
+comparable with the preceding years.
 
-The reconstruction process requires:
+The repository is designed to allow reviewers and researchers to inspect:
 
-* defining the final study area;
-* using the documented Landsat 8/9 scene inventory;
-* applying quality masking;
-* extracting LST;
-* computing spectral indices;
-* harmonizing spatial grids;
-* constructing temporal datasets;
-* extracting training, validation, and test patches.
+- data-source and scene-selection logic;
+- preprocessing and quality-control procedures;
+- normalization and leakage-control decisions;
+- T3 temporal formulation;
+- model architectures and training protocols;
+- model-comparison logic;
+- physical-unit evaluation;
+- figure and spatial-diagnostic generation.
 
-The exact reconstruction process must be documented in the notebooks and configuration files.
+## 2. Included public components
 
-## 5. Computational requirements
+The final public release includes:
 
-Full reproduction of the model training workflow may require:
+- methodological documentation;
+- the complete notebook sequence from `01` to `09`;
+- configuration-reference files;
+- dependency and environment files;
+- lightweight CSV, JSON, YAML, and PNG products;
+- scene-inventory summaries;
+- quality-control and normalization audits;
+- NASA POWER annual and interannual descriptor summaries;
+- model-training, comparison, and evaluation notebooks.
 
-* high-memory computing environment;
-* GPU acceleration;
-* sufficient disk storage for raster stacks and tensors;
-* Python geospatial libraries;
-* deep learning framework support;
-* access to external geospatial datasets or cloud storage.
+The notebook sequence covers:
 
-The workflow may be adapted to local workstations, Google Colab, or cloud-based environments.
+```text
+01_scene_inventory_landsat_8_9.ipynb
+02_preprocessing_lst_indices.ipynb
+03_quality_control.ipynb
+04_train_only_normalization.ipynb
+05_climate_forcing_integration.ipynb
+06_tensor_construction.ipynb
+07_patch_extraction.ipynb
+08A_train_M1_unet_baseline.ipynb
+08B_train_M2_se_unet.ipynb
+08C_train_M3_convlstm_unet_v5_2016_2025_dirfix.ipynb
+08D_train_M4_convlstm_se_unet.ipynb
+08E_train_M5_t3_climate_convlstm_se_unet.ipynb
+08F_compare_models_M1_M5.ipynb
+09_physical_unit_evaluation_and_exports_figures.ipynb
+```
 
-## 6. Environment
+The notebooks are the authoritative executable implementation. The YAML files
+under `configs/` provide structured configuration references but are not
+automatically loaded by every notebook at runtime.
 
-Two environment files are provided:
+## 3. Intentionally excluded products
 
-* `requirements.txt` for pip-based installation;
-* `environment.yml` for Conda-based installation.
+Large geospatial and machine-learning products are not stored in this repository.
 
-These files define the expected computational dependencies.
+The excluded products include:
 
-Version-pinned environments should be generated after the final workflow has been successfully executed and validated.
+- original Landsat scenes;
+- full-resolution annual GeoTIFF products;
+- aligned raster stacks and multi-year cubes;
+- normalized full-resolution raster products;
+- tensor archives;
+- extracted patch datasets;
+- trained model weights and checkpoints;
+- full-resolution prediction and residual maps;
+- temporary and intermediate processing outputs;
+- large Google Drive artifacts used during execution.
 
-## 7. Reproducibility levels
+These exclusions are deliberate and define the storage boundary of the public
+release. They do not indicate that the repository is incomplete for its declared
+scope.
 
-The repository supports different levels of reproducibility.
+## 4. Reproduction boundary
+
+The repository supports methodological inspection and partial reproducibility.
+
+Complete end-to-end regeneration requires external access to:
+
+- Landsat 8/9 Collection 2 Level-2 products;
+- the study-area geometry and canonical raster grid;
+- the large annual raster products;
+- tensor and patch archives;
+- model checkpoints or sufficient resources for retraining;
+- the full-domain rasters required for spatial mosaics and diagnostics;
+- adequate storage and GPU-enabled computing resources.
+
+The public repository does not constitute a one-click or fully self-contained
+reproduction package.
+
+Some products can be regenerated from the original data and notebooks, but the
+repository does not guarantee that every large historical intermediate artifact
+can be reproduced without access to the same external data environment and
+processing dependencies used during the study.
+
+## 5. Temporal formulation and partitions
+
+The retrospective modeling task uses three antecedent annual spectral states:
+
+```text
+Y-3, Y-2, Y-1 -> LST(Y)
+```
+
+The fixed target-year partition is:
+
+```text
+Training:   2016-2019
+Validation: 2020-2022
+Test:       2023-2025
+```
+
+The split is assigned by target year before patch extraction. Patches are not
+randomly reassigned across the temporal partitions.
+
+This is a temporally controlled retrospective evaluation. It is not an
+independent spatial-block validation because the same geographic domain may
+appear in different target years.
+
+## 6. Leakage-control measures
+
+The implemented workflow applies the following controls:
+
+- LST normalization parameters are estimated only from training target years;
+- spectral scaling parameters are estimated only from training antecedent
+  predictors;
+- climate-radiative descriptor scaling parameters are estimated only from
+  training target years;
+- normalization parameters remain fixed for validation and test;
+- target-year LST is never used as an input predictor;
+- antecedent LST maps are not used as predictors;
+- model predictions and residuals are not reused as model inputs;
+- validation is used for learning-rate adjustment, checkpoint selection, and
+  early stopping;
+- TEST is reserved for final retrospective evaluation.
+
+The M5 descriptors are associated with the target year. They do not contain
+target-year LST, but their inclusion changes the interpretation of M5: it is a
+retrospective estimate conditioned on externally known target-year covariates,
+not an autonomous antecedent-only forecast.
+
+## 7. Computational environment
+
+The repository provides:
+
+```text
+requirements.txt
+environment.yml
+```
+
+These files document the expected Python and geospatial/deep-learning
+dependencies.
+
+Several notebooks were developed for Google Colab and use external Google Drive
+paths. Users must adapt these paths to their own local or cloud environment.
+
+Full training may require:
+
+- CUDA-compatible GPU acceleration;
+- sufficient RAM and GPU memory;
+- substantial disk or cloud storage;
+- Python geospatial libraries;
+- PyTorch and supporting deep-learning libraries;
+- Google Earth Engine access for the Landsat preprocessing stage;
+- internet access for NASA POWER retrieval when rebuilding climate descriptors.
+
+Exact runtime and hardware demand depend on the external raster, tensor, and
+patch archives.
+
+## 8. Reproducibility levels
 
 ### Level 1: Methodological inspection
 
-Users can inspect documentation, notebooks, configuration files, source-code structure, and lightweight tabular products without downloading large datasets.
+Users can inspect:
 
-### Level 2: Lightweight execution
+- documentation;
+- notebooks;
+- configuration references;
+- scene inventories;
+- audit tables;
+- model definitions;
+- training logic;
+- metric calculations;
+- stored notebook outputs.
 
-Users can execute selected notebooks using lightweight tabular products or small sample data, if included.
+This level does not require the large external products.
 
-The current scene inventory notebook can be inspected directly in GitHub and may be executed when the corresponding input inventory or Earth Engine access is available.
+### Level 2: Partial computational reproduction
 
-### Level 3: Full workflow reproduction
+Users with the required external intermediate inputs can rerun selected stages,
+including:
 
-Users can reconstruct the full dataset and execute the complete preprocessing, training, evaluation, and mapping workflow.
+- normalization audits;
+- tensor or patch validation;
+- model training;
+- model comparison;
+- physical-unit metric conversion;
+- figure generation.
 
-Level 3 reproduction requires access to the complete input dataset and adequate computational resources.
+The exact executable subset depends on which external products are available.
 
-## 8. Validation and leakage control
+### Level 3: Complete regeneration
 
-Spatial-temporal modeling is vulnerable to inflated performance if data partitioning is poorly designed.
+A complete reconstruction from original Landsat products through model training
+and full-domain spatial diagnostics requires the full external data chain,
+adequate storage, compatible software, and sufficient computational resources.
 
-The final workflow must explicitly document:
+The public repository documents this chain but does not contain all required
+large-volume inputs and outputs.
 
-* training data;
-* validation data;
-* test data;
-* temporal holdout logic;
-* spatial holdout logic, if used;
-* normalization parameters estimated from training data only.
+## 9. Model-comparison interpretation
 
-Random patch-level splitting should be avoided unless its limitations are explicitly acknowledged and controlled.
+M1-M4 use the same spectral T3 predictor content and fixed temporal partitions,
+allowing architectural comparison under broadly comparable conditions.
 
-## 9. Expected reviewer use
+M5 adds two regional climate-radiative descriptors and uses a model-specific
+training protocol. Therefore, the M4-M5 comparison represents two complete
+experimental configurations.
 
-A reviewer should be able to use this repository to:
+It must not be interpreted as:
 
-* understand the complete computational workflow;
-* inspect the Landsat 8/9 scene inventory;
-* verify the 2013–2025 operational period;
-* confirm that 2026 was excluded because the annual period is incomplete;
-* inspect the model architecture and preprocessing logic;
-* verify that data leakage controls were considered;
-* reproduce selected outputs when data and computational resources are available;
-* evaluate whether the reported results are methodologically traceable.
+- a pure climate ablation;
+- an isolated estimate of the contribution of the two NASA POWER variables;
+- evidence of causal atmospheric control;
+- evidence of autonomous future forecasting skill.
 
-## 10. Current status
+## 10. Spatial evaluation limitations
 
-This repository is under active development.
+The repository documents both patch-based and full-domain evaluation.
 
-At this stage, the repository contains:
+These evaluation contexts are not numerically interchangeable:
 
-* the main repository documentation;
-* data source documentation;
-* preprocessing documentation;
-* reproducibility notes;
-* configuration files;
-* environment files;
-* source-code module structure;
-* notebook index;
-* Landsat 8/9 scene inventory notebook;
-* Landsat 8/9 scene inventory tables for the 2013–2025 operational period.
+- TEST patch metrics are computed from the external non-overlapping patch
+  archive;
+- full-domain metrics may be calculated from a spatial mosaic assembled through
+  overlapping-window inference and weighting;
+- local zoom windows are illustrative spatial diagnostics, not independent
+  validation subsets.
 
-Final preprocessing notebooks, modeling notebooks, source-code modules, and output-generation scripts will be added as the manuscript workflow is consolidated.
+Spatial autocorrelation, shared geographic coverage across years, and smoothing
+of local thermal extremes must be considered when interpreting performance.
+
+## 11. Prospective-component boundary
+
+The current public release documents the retrospective LST modeling workflow.
+
+It does not provide an executable public implementation of:
+
+- CA-ANN/MOLUSCE future land-cover simulation;
+- prospective spectral-predictor generation;
+- conditioned 2035 LST/SUHI projection.
+
+Those components correspond to a separate stage of the broader study and are
+outside the declared reproducibility scope of this repository release.
+
+## 12. Expected reviewer use
+
+A reviewer should be able to use the repository to:
+
+- verify the Landsat 8/9 operational period and WRS-2 scene inventory;
+- inspect the annual-product and masking logic;
+- verify train-only normalization procedures;
+- inspect the T3 input construction;
+- inspect the five model architectures;
+- verify the temporal partition and evaluation logic;
+- assess leakage-control decisions;
+- reproduce selected lightweight outputs when the required external inputs are
+  available;
+- determine which claims are directly supported by the public computational
+  record and which require external large-volume products.
+
+## 13. Final status
+
+This repository is complete for its declared public scope.
+
+It provides the finalized retrospective notebook sequence, methodological
+documentation, configuration references, lightweight audit products, and model
+comparison workflow associated with the current manuscript.
+
+No additional public notebooks are planned for this release.
