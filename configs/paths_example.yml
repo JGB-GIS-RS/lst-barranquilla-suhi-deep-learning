@@ -1,51 +1,91 @@
-# Example path configuration file.
-# Copy this file as configs/paths.yml and edit it according to your local or cloud environment.
-# Do not commit configs/paths.yml if it contains personal or machine-specific paths.
+# Example path reference for the Barranquilla LST/SUHI repository.
+#
+# Copy this file as `configs/paths.yml` and adapt it to the local, cloud, or
+# Google Colab environment used for execution.
+#
+# The public notebooks do not all load this YAML automatically. It is provided as
+# a structured path reference. Notebook-specific paths must still be checked
+# before execution.
+#
+# Do not commit `configs/paths.yml` when it contains personal, institutional, or
+# machine-specific locations.
+
+configuration_role:
+  type: "path_reference"
+  runtime_authoritative: false
+  authoritative_source: "Notebook-specific path definitions"
 
 project:
   name: "lst-barranquilla-suhi-deep-learning"
+  repository_root: "/path/to/lst-barranquilla-suhi-deep-learning"
 
 repository_paths:
-  data_directory: "data"
+  configs: "configs"
+  data: "data"
   scene_inventory: "data/scene_inventory"
   quality_control: "data/quality_control"
   normalization: "data/normalization"
   climate_forcings: "data/climate_forcings"
+
   docs: "docs"
   documentation_figures: "docs/figures"
   quality_control_figures: "docs/figures/quality_control"
   normalization_figures: "docs/figures/normalization"
   climate_forcing_figures: "docs/figures/climate_forcings"
+  patch_figures: "docs/figures/patches"
+
   notebooks: "notebooks"
-  configs: "configs"
-  source_code: "src"
 
-external_paths:
-  raw_landsat_data: "/path/to/external/raw_landsat_data"
-  annual_raw_composites: "/path/to/external/annual_raw_composites"
-  normalized_rasters: "/path/to/external/normalized_rasters"
-  climate_forcings: "/path/to/external/climate_forcings"
-  tensors: "/path/to/external/tensors"
-  patches: "/path/to/external/patches"
+external_inputs:
+  study_area_geometry: "/path/to/external/study_area_geometry"
+  canonical_grid: "/path/to/external/canonical_grid"
+
+  landsat_source_or_exports: "/path/to/external/landsat"
+  annual_landsat_products: "/path/to/external/annual_landsat_products"
+  normalized_annual_products: "/path/to/external/normalized_annual_products"
+
+  nasa_power_source_data: "/path/to/external/nasa_power"
+
+  tensor_archives: "/path/to/external/tensors"
+  patch_archives: "/path/to/external/patches"
+
+  reference_experiment_spectral_patches: "/path/to/external/T3_full"
+  reference_experiment_m5_patches: "/path/to/external/T3_full_M5B_delta_t2m_delta_radiation"
+
   model_checkpoints: "/path/to/external/model_checkpoints"
-  prediction_maps: "/path/to/external/prediction_maps"
+  observed_full_domain_rasters: "/path/to/external/observed_full_domain_rasters"
+  predicted_full_domain_rasters: "/path/to/external/predicted_full_domain_rasters"
 
-outputs:
+external_outputs:
   root: "/path/to/external/outputs"
-  figures: "/path/to/external/outputs/figures"
+  annual_rasters: "/path/to/external/outputs/annual_rasters"
+  normalized_rasters: "/path/to/external/outputs/normalized_rasters"
+  tensors: "/path/to/external/outputs/tensors"
+  patches: "/path/to/external/outputs/patches"
+  checkpoints: "/path/to/external/outputs/checkpoints"
   tables: "/path/to/external/outputs/tables"
+  figures: "/path/to/external/outputs/figures"
   maps: "/path/to/external/outputs/maps"
   logs: "/path/to/external/outputs/logs"
   diagnostics: "/path/to/external/outputs/diagnostics"
 
-temporary:
+temporary_paths:
   scratch: "/path/to/external/scratch"
   cache: "/path/to/external/cache"
 
+environment_examples:
+  local:
+    repository_root: "/absolute/path/to/lst-barranquilla-suhi-deep-learning"
+    external_data_root: "/absolute/path/to/external/research_data"
+
+  google_colab:
+    repository_root: "/content/lst-barranquilla-suhi-deep-learning"
+    external_data_root: "/content/drive/MyDrive/path/to/research_data"
+
 notes:
-  - "This is an example configuration file."
-  - "Copy this file as configs/paths.yml and edit it for your local, cloud, or Colab environment."
-  - "Do not commit configs/paths.yml if it contains personal or machine-specific paths."
-  - "Repository paths refer to lightweight files stored in GitHub."
-  - "External paths refer to large raster datasets, tensors, patches, model checkpoints, and prediction outputs that are not stored in GitHub."
-  - "Large data files should not be stored in the GitHub repository."
+  - "Repository paths identify lightweight files committed to GitHub."
+  - "External input and output paths identify large products intentionally excluded from GitHub."
+  - "Historical archive names such as T3_full and T3_full_M5B_delta_t2m_delta_radiation are retained because they are used by the reference training notebooks."
+  - "The public model label is M5; M5B is only a historical internal identifier."
+  - "Users must verify notebook-specific paths before execution because the notebooks do not all read this YAML automatically."
+  - "Do not store raw imagery, annual rasters, tensors, patch archives, checkpoints, or full-resolution prediction maps inside the GitHub repository."
