@@ -1,28 +1,25 @@
-# Model configuration for the Barranquilla LST/SUHI spatial-temporal workflow.
+# Model configuration reference for the Barranquilla LST/SUHI workflow.
+#
+# This YAML file documents the principal model and input settings implemented in
+# the public training notebooks. It is not automatically loaded by every
+# notebook. The executed notebooks remain the authoritative implementation.
 
-model:
-  name: "convlstm-se-unet-climate"
-  label: "M5B"
-  task: "spatial_temporal_regression"
-  target_variable: "LST"
-  target_units: "degrees Celsius"
+configuration_role:
+  type: "reference_record"
+  runtime_authoritative: false
+  authoritative_source: "notebooks/08A-08E"
+
+task:
+  name: "supervised_spatiotemporal_regression"
+  target_variable: "annual_Landsat_LST"
+  target_training_scale: "train-only normalized z-score"
+  physical_output_units: "degrees Celsius"
   prediction_target: "LST at target year Y"
-  model_family: "U-Net + ConvLSTM + squeeze-and-excitation channel attention"
+  temporal_formulation: "Y-3, Y-2, Y-1 -> LST(Y)"
 
-input:
-  temporal_sequence:
-    time_steps: 3
-    states:
-      - label: "T1"
-        year_offset: -3
-        description: "Antecedent state Y-3"
-      - label: "T2"
-        year_offset: -2
-        description: "Antecedent state Y-2"
-      - label: "T3"
-        year_offset: -1
-        description: "Antecedent state Y-1"
-
+input_data:
+  temporal_steps: 3
+  spectral_features_per_step: 6
   spectral_variables:
     - "NDVI"
     - "NDMI"
@@ -30,113 +27,202 @@ input:
     - "UI"
     - "SAVI"
     - "BSI"
+  spectral_channels_total: 18
 
-  quality_variables:
-    include_observation_quality_mask: true
-    description: "Continuous observation-quality mask retained as an auxiliary quality-control input when used by the executed model."
-
-  climate_forcings:
-    include: true
+  climate_radiative_descriptors:
+    used_by_models:
+      - "M5"
     source: "NASA POWER Daily API"
-    type: "annual_interannual_regional_descriptors"
-    spatial_reference: "Model-domain centroid"
-    retained_variables:
+    spatial_support: "Annual regional descriptors for the model-domain centroid"
+    variables:
       - name: "delta_t2m_mean_Y_minus_Yminus1"
-        short_name: "delta_t2m"
-        description: "Interannual change in annual mean 2 m air temperature between target year Y and Y-1."
+        normalized_archive_name: "delta_t2m_mean_Y_minus_Yminus1_ztrain"
+        description: "Change in annual mean 2 m air temperature between target year Y and Y-1."
       - name: "delta_solar_radiation_mean_Y_minus_Yminus1"
-        short_name: "delta_radiation"
-        description: "Interannual change in annual mean all-sky surface shortwave downward radiation between target year Y and Y-1."
-    evaluated_but_not_retained:
-      - "precipitation descriptors"
-      - "relative humidity descriptors"
-      - "wind-speed descriptors"
-      - "absolute annual climate descriptors"
-      - "climate anomalies"
-    description: "Climate variables are used as annual interannual context and must not encode observed target-year LST."
+        normalized_archive_name: "delta_solar_radiation_mean_Y_minus_Yminus1_ztrain"
+        description: "Change in annual mean all-sky surface solar radiation between target year Y and Y-1."
+    number_of_channels: 2
+    pixel_level_climate_fields: false
 
-  prohibited_input_variables:
+  validity_mask:
+    role: "Binary mask used to exclude invalid, water, non-land, and unavailable pixels from loss and metric calculations."
+    used_as_predictor: false
+
+  prohibited_predictors:
     - "observed_LST_target_year"
-    - "predicted_LST_previous_models"
-    - "validation_or_test_target_LST_as_predictor"
+    - "antecedent_LST_maps"
+    - "predictions_from_previous_models"
+    - "model_residuals"
+    - "validation_or_test_target_LST"
 
-  tensor_format:
-    conceptual_order: "samples x time_steps x rows x columns x variables"
-    framework_order: "To be specified in the executed implementation."
+tensor_organization:
+  M1_M2:
+    input_shape: "B x 18 x H x W"
+    interpretation: "Three antecedent annual states stacked as spectral channels."
+  M3_M4:
+    input_shape: "B x 3 x 6 x H x W"
+    interpretation: "Explicit three-step spectral sequence processed by ConvLSTM."
+  M5_external_archive:
+    input_shape: "B x 20 x H x W"
+    composition: "18 spectral channels plus 2 regional climate-radiative channels."
+  M5_internal_fusion:
+    convlstm_hidden_channels: 32
+    auxiliary_channels: 2
+    fused_unet_input_channels: 34
+    interpretation: "The final 32-channel ConvLSTM hidden state is recalibrated and concatenated with the two regional descriptors before entering the spatial SE U-Net."
 
-architecture:
-  encoder: true
-  decoder: true
-  skip_connections: true
-  convlstm: true
-  channel_attention: true
-  attention_type: "squeeze-and-excitation"
-  output_type: "single_band_regression_map"
-
-model_sequence:
-  - name: "unet_2d"
-    label: "M1"
-    description: "U-Net 2D without explicit temporal memory."
-  - name: "convlstm_unet"
-    label: "M2"
-    description: "ConvLSTM U-Net without channel attention."
-  - name: "convlstm_se_unet"
-    label: "M4"
-    description: "ConvLSTM U-Net with squeeze-and-excitation channel attention."
-  - name: "convlstm_se_unet_climate"
-    label: "M5B"
-    description: "Final ConvLSTM + SE U-Net with selected NASA POWER interannual climate forcings."
-
-parameters:
-  patch_size: null
-  batch_normalization: null
-  dropout_rate: null
-  activation: "relu"
+common_architecture:
+  output_channels: 1
   output_activation: "linear"
-  loss_function: "mean_squared_error"
-  optimizer: "adam"
-  learning_rate: null
-  batch_size: null
-  epochs: null
-  early_stopping: true
+  base_channels: 32
+  encoder_channels:
+    - 32
+    - 64
+    - 128
+  bottleneck_channels: 256
+  downsampling_levels: 3
+  convolution_kernel_size: 3
+  convolution_padding: 1
+  batch_normalization: true
+  hidden_activation: "ReLU"
+  dropout_type: "Dropout2d"
+  dropout_rate: 0.10
+  pooling: "MaxPool2d"
+  upsampling: "ConvTranspose2d"
+  skip_connections: true
 
-training_validation:
-  split_strategy: "temporal_holdout"
-  normalization_train_period: "2013-2019"
-  target_train_years:
+convlstm:
+  input_channels_per_time_step: 6
+  hidden_channels: 32
+  kernel_size: 3
+  time_steps: 3
+  output_state: "Final hidden state"
+
+squeeze_excitation:
+  reduction_ratio: 8
+  pooling: "AdaptiveAvgPool2d"
+  gate_activation: "Sigmoid"
+  interpretation: "Internal channel recalibration, not causal or biophysical variable importance."
+
+models:
+  - label: "M1"
+    public_name: "U-Net baseline"
+    notebook: "notebooks/08A_train_M1_unet_baseline.ipynb"
+    external_patch_archive: "T3_full"
+    input_mode: "spectral18"
+    temporal_representation: "Implicit 18-channel stacking"
+    convlstm: false
+    temporal_se: false
+    spatial_se: false
+
+  - label: "M2"
+    public_name: "SE U-Net"
+    notebook: "notebooks/08B_train_M2_se_unet.ipynb"
+    external_patch_archive: "T3_full"
+    input_mode: "spectral18"
+    temporal_representation: "Implicit 18-channel stacking"
+    convlstm: false
+    temporal_se: false
+    spatial_se: true
+
+  - label: "M3"
+    public_name: "ConvLSTM U-Net"
+    notebook: "notebooks/08C_train_M3_convlstm_unet_v5_2016_2025_dirfix.ipynb"
+    external_patch_archive: "T3_full"
+    input_mode: "spectral18"
+    temporal_representation: "Explicit 3 x 6 spectral sequence"
+    convlstm: true
+    temporal_se: false
+    spatial_se: false
+
+  - label: "M4"
+    public_name: "ConvLSTM-SE U-Net"
+    notebook: "notebooks/08D_train_M4_convlstm_se_unet.ipynb"
+    external_patch_archive: "T3_full"
+    input_mode: "spectral18"
+    temporal_representation: "Explicit 3 x 6 spectral sequence"
+    convlstm: true
+    temporal_se: true
+    spatial_se: true
+
+  - label: "M5"
+    public_name: "T3-Climate ConvLSTM-SE U-Net"
+    notebook: "notebooks/08E_train_M5_t3_climate_convlstm_se_unet.ipynb"
+    historical_internal_label: "M5B"
+    external_patch_archive: "T3_full_M5B_delta_t2m_delta_radiation"
+    input_mode: "spectral18_plus_climate2"
+    raw_input_channels: 20
+    temporal_representation: "Explicit 3 x 6 spectral sequence plus auxiliary target-year descriptor fusion"
+    convlstm: true
+    temporal_se: true
+    spatial_se: true
+
+training_reference:
+  common:
+    optimizer: "AdamW"
+    learning_rate: 0.001
+    weight_decay: 0.00001
+    loss_function: "masked_Huber"
+    huber_delta: 1.0
+    gradient_clipping_norm: 1.0
+    scheduler: "ReduceLROnPlateau"
+    scheduler_mode: "min"
+    scheduler_factor: 0.5
+    scheduler_patience_epochs: 5
+    checkpoint_criterion: "minimum_validation_loss"
+  M1_to_M4:
+    batch_size: 4
+    maximum_epochs: 100
+    early_stopping_patience_epochs: 15
+  M5:
+    batch_size: 8
+    maximum_epochs: 120
+    early_stopping_patience_epochs: 18
+    seed: 20260530
+
+temporal_partition:
+  split_strategy: "Target-year temporal holdout"
+  training_target_years:
     - 2016
     - 2017
     - 2018
     - 2019
-  target_validation_years:
+  validation_target_years:
     - 2020
     - 2021
     - 2022
-  target_test_years:
+  test_target_years:
     - 2023
     - 2024
     - 2025
-  normalization: "training_data_only"
-  leakage_control:
-    target_year_LST_as_input: false
-    validation_test_years_in_training: false
-    normalization_from_full_dataset: false
-    previous_model_predictions_as_inputs: false
+  independent_spatial_block_holdout: false
 
 evaluation:
   metrics:
     - "RMSE"
     - "MAE"
+    - "Bias"
     - "R2"
-    - "bias"
-    - "residual_standard_deviation"
+    - "valid_pixel_count"
+  reporting_levels:
+    - "temporal_split"
+    - "target_year"
+    - "aggregated_TEST"
+    - "normalized_units"
+    - "degrees_Celsius"
   spatial_diagnostics:
-    - "residual_maps"
     - "observed_vs_predicted_maps"
-    - "year_wise_error_maps"
+    - "residual_maps"
+    - "agreement_plots"
+    - "local_zoom_windows"
+
+interpretation:
+  M1_to_M4: "Controlled comparison of spectral-input architectures under a common predictor structure."
+  M4_to_M5: "Comparison between complete experimental configurations, not a pure climate-radiative ablation."
+  M5: "Retrospective LST estimation conditioned on target-year regional descriptors, not an autonomous antecedent-only forecast."
 
 notes:
-  - "This configuration file defines the intended model structure and comparison sequence."
-  - "Final hyperparameters must be updated after model implementation and validation."
-  - "The final input variable list must match the manuscript, notebooks, and executed model pipeline."
-  - "NASA POWER variables are regional annual descriptors, not spatial raster predictors."
+  - "Historical external archive names are preserved to maintain traceability and avoid breaking notebook paths."
+  - "The validity mask is not an explanatory variable."
+  - "M5B is an internal historical identifier; the public model label is M5."
+  - "Large patch archives and checkpoints are intentionally stored outside GitHub."
