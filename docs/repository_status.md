@@ -42,8 +42,7 @@ The repository includes:
 - structured configuration references;
 - lightweight data and audit products;
 - methodological documentation;
-- the complete public notebook sequence;
-- a minimal `src/` directory retained for repository structure.
+- the complete public notebook sequence.
 
 The principal top-level files and directories are:
 
@@ -58,7 +57,6 @@ configs/
 data/
 docs/
 notebooks/
-src/
 ```
 
 ## 3. Included notebooks
@@ -184,7 +182,37 @@ and uses a model-specific training protocol.
 Therefore, the M4-M5 contrast is not interpreted as a pure ablation that isolates
 the effect of climate augmentation.
 
-## 8. Data intentionally excluded
+## 8. Reference-experiment artifacts
+
+The model-training notebooks consume archived external patch datasets from the
+reference experiment reported in the manuscript.
+
+Some external directory names and channel identifiers retain historical
+development labels, including:
+
+```text
+T3_full
+T3_full_M5B_delta_t2m_delta_radiation
+M5B
+```
+
+The public model label is:
+
+```text
+M5: T3-Climate ConvLSTM-SE U-Net
+```
+
+Notebooks 06 and 07 document the public tensor- and patch-construction logic.
+Notebooks 08A-08E load the archived external datasets used in the reference
+training experiment. Historical naming differences do not change the declared
+predictor definitions, temporal formulation, model architectures, loss functions,
+or evaluation metrics.
+
+Small differences among historical reconstruction artifacts should be interpreted
+as versioning records of the computational workflow, not as separate scientific
+experiments.
+
+## 9. Data intentionally excluded
 
 The following large-volume products are intentionally excluded from GitHub:
 
@@ -201,7 +229,7 @@ The following large-volume products are intentionally excluded from GitHub:
 These exclusions are deliberate and define the storage boundary of the public
 repository. They do not indicate that the public archive is unfinished.
 
-## 9. Reproducibility status
+## 10. Reproducibility status
 
 The repository supports:
 
@@ -228,7 +256,17 @@ Complete regeneration requires:
 - adequate local or cloud storage;
 - a compatible Python, Google Earth Engine, and Google Colab environment.
 
-## 10. Prospective component boundary
+## 11. Climate-diagnostic interpretation
+
+The repository includes full-period climate-error diagnostic products for
+methodological traceability.
+
+The two M5 descriptors were retained on the basis of physical consistency and
+development-stage diagnostics. Full-period diagnostic tables are interpreted as
+descriptive post hoc audits and were not used for checkpoint selection,
+hyperparameter optimization, or TEST-performance tuning.
+
+## 12. Prospective component boundary
 
 The current public repository documents the retrospective LST modeling workflow
 and the computational analyses already completed for the manuscript.
@@ -242,7 +280,7 @@ It does not include an executable public implementation of:
 These prospective components belong to a separate stage of the broader study and
 are not part of the finalized public code archive represented here.
 
-## 11. Reviewer interpretation
+## 13. Reviewer interpretation
 
 Reviewers should interpret this repository as:
 
@@ -258,9 +296,10 @@ It should not be interpreted as:
 - a fully self-contained data repository;
 - a one-click reproduction package;
 - a public archive of all intermediate rasters and checkpoints;
+- a byte-for-byte reconstruction of every historical intermediate artifact;
 - a completed implementation of the future 2035 projection stage.
 
-## 12. Final status statement
+## 14. Final status statement
 
 The repository is complete for its declared public scope.
 
