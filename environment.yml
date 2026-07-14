@@ -1,29 +1,37 @@
 name: lst-barranquilla-suhi
 
 channels:
-  - conda-forge
   - pytorch
+  - conda-forge
   - defaults
 
 dependencies:
-  - python=3.10
+  # Reference Python environment used by the public notebooks.
+  - python=3.12
+
+  # Numerical and tabular processing
   - numpy
   - pandas
-  - geopandas
-  - rasterio
-  - rioxarray
-  - xarray
   - scipy
   - scikit-learn
-  - scikit-image
+
+  # Geospatial processing and external data access
+  - rasterio
+  - pyproj
+  - requests
+  - earthengine-api
+
+  # Deep learning
+  - pytorch
+
+  # Visualization and table export
   - matplotlib
-  - seaborn
-  - tqdm
+  - openpyxl
+
+  # Configuration and notebook execution
   - pyyaml
+  - ipython
   - jupyter
   - notebook
   - ipykernel
-  - pytorch
-  - torchvision
-  - torchaudio
   - pip
