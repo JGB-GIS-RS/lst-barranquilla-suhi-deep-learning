@@ -1,19 +1,25 @@
+# Core numerical and tabular processing
 numpy
 pandas
-geopandas
-rasterio
-rioxarray
-xarray
 scipy
 scikit-learn
-scikit-image
+
+# Geospatial processing
+rasterio
+pyproj
+earthengine-api
+requests
+
+# Deep learning
+torch
+
+# Visualization and exported tables
 matplotlib
-seaborn
-tqdm
-pyyaml
+openpyxl
+
+# Configuration and notebook execution
+PyYAML
+IPython
 jupyter
 notebook
 ipykernel
-torch
-torchvision
-torchaudio
