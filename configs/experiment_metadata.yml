@@ -13,7 +13,8 @@ experiment:
   prospective_component_included: false
 
 associated_manuscript:
-  title: "Integrating Landsat Spectral Trajectories and Climate-Radiative Descriptors in a Spatiotemporal Deep Learning Framework for Annual Urban LST Prediction and Conditioned 2035 SUHI Projection"
+  title: null
+  scope: "Retrospective annual LST modeling and derived SUHI diagnostics for the Barranquilla Metropolitan Area"
   status: "in_preparation"
   target_journal: "Remote Sensing"
   doi: null
@@ -155,20 +156,20 @@ reproducibility:
     - "Temporary and intermediate processing products"
 
 authors:
-  - name: "Julián Garzón Barrero"
-    affiliation:
-      - "Universidad del Quindío"
-  - name: "Nancy Este Sánchez-Pineda"
+  - name: "Nancy E. Sánchez"
     affiliation:
       - "Universidad Politécnica de Madrid"
       - "Universidad del Quindío"
   - name: "Iñigo Molina Sánchez"
     affiliation:
       - "Universidad Politécnica de Madrid"
+  - name: "Julián Garzón Barrero"
+    affiliation:
+      - "Universidad del Quindío"
 
 notes:
   - "The repository documents the retrospective computational component associated with the current manuscript."
-  - "The CA-ANN/MOLUSCE land-cover simulation and conditioned 2035 LST/SUHI projection are not included in this repository release."
+  - "Prospective scenario-based land-cover and LST/SUHI projection components are not included in this repository release."
   - "Some external directories and files retain historical development identifiers such as M5B."
   - "Full-period climate-error tables are descriptive post hoc diagnostics and were not used for checkpoint selection, hyperparameter optimization, or TEST performance tuning."
   - "Large computational products remain outside GitHub by design."
