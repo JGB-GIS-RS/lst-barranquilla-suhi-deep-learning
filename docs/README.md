@@ -24,7 +24,9 @@ order:
 
 - `workflow.md`: summarizes the complete public workflow, from Landsat 8/9 scene
   inventory and annual product generation to tensor construction, patch
-  extraction, model training, model comparison, and physical-unit evaluation.
+  extraction, model training, independent evaluation, EMC-BUILT-based non-urban
+  reference construction, derived SUHI diagnostics, and urban-to-peripheral
+  thermal-gradient analysis.
 
 - `data_sources.md`: documents the satellite and NASA POWER data sources,
   temporal coverage, scene-selection logic, spatial reference, and lightweight
@@ -69,6 +71,8 @@ in the repository:
 08E_train_M5_t3_climate_convlstm_se_unet.ipynb
 08F_compare_models_M1_M5.ipynb
 09_physical_unit_evaluation_and_exports_figures.ipynb
+10_emc_built_2022_reference_and_suhi_diagnostics.ipynb
+11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
 ```
 
 The repository also includes lightweight scene-inventory, quality-control,
