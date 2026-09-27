@@ -50,6 +50,9 @@ Prospective scenario-based projection is outside the declared repository scope.
 Notebooks 10 and 11 correspond to the final analytical closure of the SUHI
 component.
 
+
+> **Public notebook note:** Notebooks 10 and 11 preserve the approved computational cells of the final executed notebooks. Inline runtime outputs and execution-specific metadata are omitted from the public copies to keep the repository lightweight and avoid environment-specific metadata; the analytical code is unchanged.
+
 ## 3. Scientific interpretation
 
 The directly modeled target is LST.
