@@ -4,15 +4,19 @@ title: "Barranquilla LST/SUHI Deep-Learning Workflow"
 type: software
 
 authors:
+  - family-names: "Sánchez"
+    given-names: "Nancy E."
+    affiliation: "Universidad Politécnica de Madrid; Universidad del Quindío"
+    email: "nesanchez@uniquindio.edu.co"
+
+  - family-names: "Molina Sánchez"
+    given-names: "Iñigo"
+    affiliation: "Universidad Politécnica de Madrid"
+
   - family-names: "Garzón Barrero"
     given-names: "Julián"
     affiliation: "Universidad del Quindío"
     email: "juliangarzonb@uniquindio.edu.co"
-
-  - family-names: "Sánchez-Pineda"
-    given-names: "Nancy Estela"
-    affiliation: "Universidad del Quindío"
-    email: "nesanchez@uniquindio.edu.co"
 
 abstract: "Research software and computational documentation for retrospective annual land surface temperature modeling in the Barranquilla Metropolitan Area, Colombia. The repository integrates Landsat 8/9 spectral trajectories, NASA POWER regional climate-radiative descriptors, and U-Net, ConvLSTM, and squeeze-and-excitation architectures under a temporally controlled training, validation, and test design."
 
