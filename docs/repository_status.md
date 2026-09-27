@@ -1,67 +1,32 @@
 # Repository status
 
-This document summarizes the final public status of the
-`lst-barranquilla-suhi-deep-learning` repository and defines its reproducibility
-boundary.
+This document defines the public scope and reproducibility boundary of
+`lst-barranquilla-suhi-deep-learning`.
 
-## 1. Final public status
+## 1. Current scope
 
-This repository is the public computational companion to the Barranquilla
-LST/SUHI study.
+The repository is the computational companion for a retrospective study of annual
+land surface temperature (LST) modeling and derived surface urban heat island
+(SUHI) diagnostics in the Barranquilla Metropolitan Area, Colombia.
 
-It documents the implemented retrospective workflow for:
+The implemented public workflow covers:
 
-- Landsat 8/9 scene inventory;
-- annual LST and spectral-index preprocessing;
-- quality control;
+- Landsat 8/9 inventory and preprocessing;
+- annual LST and six spectral indices;
+- quality control and canonical-grid harmonization;
 - train-only normalization;
-- NASA POWER regional climate-radiative descriptor construction;
-- T3 tensor construction;
-- spatial patch extraction;
-- training of models M1-M5;
-- model comparison;
-- physical-unit evaluation;
-- figure and spatial-diagnostic export.
+- NASA POWER regional climate-radiative descriptors;
+- T3 tensor and patch construction;
+- M1–M5 training;
+- independent 2023–2025 TEST evaluation;
+- physical-unit and spatial LST diagnostics;
+- EMC-BUILT 2022 non-urban reference definition;
+- continuous SUHI diagnostics;
+- urban-to-peripheral thermal-gradient analysis.
 
-The public release covers the 2013-2025 operational Landsat period. The year 2026
-is excluded because it does not represent a complete annual period comparable
-with the preceding years.
+Prospective scenario-based projection is outside the declared repository scope.
 
-This repository should be interpreted as a finalized public research-code and
-documentation archive for methodological inspection, traceability, and partial
-reproducibility. No additional notebooks are required for the public release
-associated with the current manuscript.
-
-## 2. Included repository components
-
-The repository includes:
-
-- root-level project documentation;
-- license and citation metadata;
-- environment and dependency files;
-- structured configuration references;
-- lightweight data and audit products;
-- methodological documentation;
-- the complete public notebook sequence.
-
-The principal top-level files and directories are:
-
-```text
-README.md
-LICENSE
-CITATION.cff
-.gitignore
-requirements.txt
-environment.yml
-configs/
-data/
-docs/
-notebooks/
-```
-
-## 3. Included notebooks
-
-The complete public notebook sequence is:
+## 2. Public notebook sequence
 
 ```text
 01_scene_inventory_landsat_8_9.ipynb
@@ -78,233 +43,159 @@ The complete public notebook sequence is:
 08E_train_M5_t3_climate_convlstm_se_unet.ipynb
 08F_compare_models_M1_M5.ipynb
 09_physical_unit_evaluation_and_exports_figures.ipynb
+10_emc_built_2022_reference_and_suhi_diagnostics.ipynb
+11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
 ```
 
-These notebooks document the implemented public workflow from scene inventory to
-model evaluation and figure generation.
+Notebooks 10 and 11 correspond to the final analytical closure of the SUHI
+component.
 
-## 4. Included documentation
+## 3. Scientific interpretation
 
-The `docs/` directory contains:
+The directly modeled target is LST.
+
+```text
+Y-3, Y-2, Y-1 → LST(Y)
+```
+
+M5 augments the antecedent spectral sequence with two target-year regional
+climate-radiative descriptors. It is therefore interpreted as a retrospective
+conditioned estimator, not an autonomous antecedent-only forecast.
+
+SUHI is derived after LST estimation:
+
+```text
+LST → independent non-urban reference → Tref → continuous SUHI
+```
+
+It is not treated as a second independently trained prediction target.
+
+## 4. Temporal protocol
+
+```text
+TRAIN:      2016–2019
+VALIDATION: 2020–2022
+TEST:       2023–2025
+```
+
+Validation controls checkpoint selection. TEST is reserved for independent final
+evaluation.
+
+## 5. Final reference definition
+
+The SUHI reference workflow uses EMC-BUILT R2025A, epoch 2022.
+
+```text
+BU_all:  built-up fraction >= 0.10
+BU_core: 8-neighbor components >= 0.333 km²
+R:       4–6 km from BU_core within fixed TEST support, excluding BU_all
+```
+
+Final R geometry:
+
+```text
+167,527 pixels
+150.7743 km²
+```
+
+The operational core threshold is sensitivity-tested at 0.25, 0.333, and
+0.50 km².
+
+## 6. Final SUHI diagnostic structure
+
+Urban support:
+
+```text
+U = BU_core ∩ annual common SUHI support
+```
+
+Primary diagnostics:
+
+- annual reference temperature;
+- urban median thermal contrast;
+- urban P95;
+- observed/predicted SUHI fields;
+- SUHI residual;
+- urban SUHI intensity distribution;
+- urban-to-peripheral gradient;
+- sensitivity analysis;
+- urban/reference error decomposition.
+
+SUHI remains continuous in degrees Celsius; qualitative intensity classes are not
+part of the principal workflow.
+
+## 7. Included repository components
+
+The repository includes:
 
 ```text
 README.md
-data_sources.md
-preprocessing.md
-modeling.md
-workflow.md
-reproducibility_notes.md
-repository_status.md
-figures/
-```
-
-These files describe the study data, preprocessing decisions, T3 formulation,
-M1-M5 model design, leakage controls, evaluation logic, reproducibility boundary,
-and final repository scope.
-
-## 5. Included configuration references
-
-The `configs/` directory contains:
-
-```text
-README.md
-paths_example.yml
-model_config.yml
-training_config.yml
-experiment_metadata.yml
-```
-
-These YAML files provide structured records of paths, architecture settings,
-training parameters, temporal partitions, and experiment metadata.
-
-The notebooks remain the authoritative executable implementations. The YAML files
-are reference records and are not automatically loaded by all notebooks at
-runtime.
-
-## 6. Included lightweight data products
-
-The `data/` directory contains compact products that support auditability and
-methodological inspection:
-
-```text
+LICENSE
+CITATION.cff
+requirements.txt
+environment.yml
+configs/
 data/
-├── scene_inventory/
-├── quality_control/
-├── normalization/
-└── climate_forcings/
+docs/
+notebooks/
 ```
 
-Depending on the subdirectory, included products may contain:
+The `data/` directory contains lightweight inventories, audit tables,
+normalization records, climate summaries, and related compact products.
 
-- scene-level and annual inventory tables;
-- geometry and file-availability audits;
-- valid-pixel summaries;
-- normalization parameters;
-- normalized-value diagnostics;
-- NASA POWER annual summaries;
-- interannual climate-radiative descriptors;
-- exploratory climate-error diagnostics;
-- compact JSON, CSV, and PNG records.
+## 8. Data intentionally excluded
 
-These products do not replace the large rasters, tensors, patch archives, or
-model checkpoints used during the full computational workflow.
+The following are not stored in GitHub:
 
-## 7. Modeling status
+- raw Landsat scenes;
+- full-resolution annual GeoTIFFs;
+- aligned raster stacks and cubes;
+- tensor archives;
+- patch archives;
+- trained checkpoints;
+- full-resolution observed/predicted LST rasters;
+- full-resolution SUHI rasters;
+- temporary processing products;
+- intermediate Google Drive artifacts.
 
-The implemented retrospective formulation is:
+This storage boundary is deliberate.
 
-```text
-Y-3, Y-2, Y-1 -> LST(Y)
-```
-
-The fixed target-year partition is:
-
-```text
-Training:   2016-2019
-Validation: 2020-2022
-Test:       2023-2025
-```
-
-The evaluated model family is:
-
-```text
-M1: U-Net baseline
-M2: SE U-Net
-M3: ConvLSTM U-Net
-M4: ConvLSTM-SE U-Net
-M5: T3-Climate ConvLSTM-SE U-Net
-```
-
-M1-M4 form the controlled spectral-model comparison. M5 is a complete augmented
-configuration that adds two target-year regional climate-radiative descriptors
-and uses a model-specific training protocol.
-
-Therefore, the M4-M5 contrast is not interpreted as a pure ablation that isolates
-the effect of climate augmentation.
-
-## 8. Reference-experiment artifacts
-
-The model-training notebooks consume archived external patch datasets from the
-reference experiment reported in the manuscript.
-
-Some external directory names and channel identifiers retain historical
-development labels, including:
-
-```text
-T3_full
-T3_full_M5B_delta_t2m_delta_radiation
-M5B
-```
-
-The public model label is:
-
-```text
-M5: T3-Climate ConvLSTM-SE U-Net
-```
-
-Notebooks 06 and 07 document the public tensor- and patch-construction logic.
-Notebooks 08A-08E load the archived external datasets used in the reference
-training experiment. Historical naming differences do not change the declared
-predictor definitions, temporal formulation, model architectures, loss functions,
-or evaluation metrics.
-
-Small differences among historical reconstruction artifacts should be interpreted
-as versioning records of the computational workflow, not as separate scientific
-experiments.
-
-## 9. Data intentionally excluded
-
-The following large-volume products are intentionally excluded from GitHub:
-
-- original Landsat scenes;
-- full-resolution annual GeoTIFF products;
-- aligned raster stacks and multi-year cubes;
-- tensor datasets;
-- patch datasets;
-- trained model weights and checkpoints;
-- full-resolution prediction and residual maps;
-- temporary preprocessing outputs;
-- intermediate Google Drive products.
-
-These exclusions are deliberate and define the storage boundary of the public
-repository. They do not indicate that the public archive is unfinished.
-
-## 10. Reproducibility status
+## 9. Reproducibility status
 
 The repository supports:
 
-- inspection of scene-selection logic;
-- review of preprocessing and quality-control decisions;
-- verification of train-only normalization logic;
-- inspection of T3 tensor and patch construction;
-- inspection of the M1-M5 architectures and training procedures;
-- review of leakage-control criteria;
-- reproduction of lightweight tables and figures when the required external
-  inputs are available;
-- review of normalized and physical-unit evaluation logic.
+- inspection of scene-selection and preprocessing logic;
+- verification of train-only normalization;
+- review of temporal partitions and leakage controls;
+- inspection of model architectures and training procedures;
+- reconstruction of model-comparison calculations when required external inputs
+  are available;
+- inspection of full-domain LST evaluation logic;
+- reconstruction of the EMC-BUILT reference procedure;
+- reconstruction of SUHI summary diagnostics;
+- reconstruction of the urban-to-peripheral thermal gradient.
 
-The repository does not provide a fully self-contained end-to-end execution
-package because the large computational inputs and outputs remain external.
+It is not a fully self-contained end-to-end data package because large-volume
+research inputs and outputs remain external.
 
-Complete regeneration requires:
+## 10. Historical identifiers
 
-- access to Landsat 8/9 Collection 2 Level-2 products;
-- access to the study-domain geometry and canonical grid;
-- access to the external annual raster products;
-- access to tensor and patch archives;
-- access to model checkpoints or sufficient GPU resources for retraining;
-- adequate local or cloud storage;
-- a compatible Python, Google Earth Engine, and Google Colab environment.
+Some archived external patch paths used by the training notebooks may retain
+historical development labels such as `M5B`.
 
-## 11. Climate-diagnostic interpretation
+The public designation used in the manuscript and repository is:
 
-The repository includes full-period climate-error diagnostic products for
-methodological traceability.
+```text
+M5: T3-Climate ConvLSTM-SE U-Net
+```
 
-The two M5 descriptors were retained on the basis of physical consistency and
-development-stage diagnostics. Full-period diagnostic tables are interpreted as
-descriptive post hoc audits and were not used for checkpoint selection,
-hyperparameter optimization, or TEST-performance tuning.
+These historical path names are retained only for traceability and do not define
+separate scientific experiments.
 
-## 12. Prospective component boundary
+## 11. Final status
 
-The current public repository documents the retrospective LST modeling workflow
-and the computational analyses already completed for the manuscript.
+The repository is complete for the declared retrospective manuscript scope
+through Notebook 11.
 
-It does not include an executable public implementation of:
-
-- CA-ANN/MOLUSCE future land-cover simulation;
-- future spectral-predictor generation;
-- conditioned 2035 LST/SUHI projection.
-
-These prospective components belong to a separate stage of the broader study and
-are not part of the finalized public code archive represented here.
-
-## 13. Reviewer interpretation
-
-Reviewers should interpret this repository as:
-
-- a final public computational companion;
-- a transparent record of the implemented retrospective workflow;
-- a source for inspecting model logic, preprocessing decisions, and evaluation
-  procedures;
-- a partial-reproducibility archive constrained by the deliberate exclusion of
-  large-volume research data and model artifacts.
-
-It should not be interpreted as:
-
-- a fully self-contained data repository;
-- a one-click reproduction package;
-- a public archive of all intermediate rasters and checkpoints;
-- a byte-for-byte reconstruction of every historical intermediate artifact;
-- a completed implementation of the future 2035 projection stage.
-
-## 14. Final status statement
-
-The repository is complete for its declared public scope.
-
-It contains the finalized notebook sequence, supporting documentation,
-configuration references, lightweight audit products, and retrospective model
-comparison workflow required to accompany the current manuscript.
-
-No further public notebooks are planned for this release.
+Future repository changes should be limited to corrections, documentation
+improvements, publication metadata, or explicitly versioned extensions.
