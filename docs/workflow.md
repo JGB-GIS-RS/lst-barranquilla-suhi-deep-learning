@@ -321,6 +321,9 @@ Implementation:
 11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
 ```
 
+
+> **Public notebook note:** Notebooks 10 and 11 preserve the approved computational cells of the final executed notebooks. Inline runtime outputs and execution-specific metadata are omitted from the public copies to keep the repository lightweight and avoid environment-specific metadata; the analytical code is unchanged.
+
 ## 14. Repository boundary
 
 The repository includes code, documentation, configuration references,
