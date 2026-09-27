@@ -14,7 +14,10 @@ implemented retrospective modeling workflow based on:
 - regional climate-radiative descriptors derived from NASA POWER;
 - T3 tensor construction;
 - deep-learning models M1-M5;
-- statistical and spatial evaluation.
+- statistical and spatial evaluation;
+- EMC-BUILT-based non-urban reference construction;
+- derived continuous SUHI diagnostics;
+- urban-to-peripheral thermal-gradient analysis.
 
 The operational Landsat period is:
 
@@ -34,6 +37,8 @@ The repository is designed to allow reviewers and researchers to inspect:
 - model architectures and training protocols;
 - model-comparison logic;
 - physical-unit evaluation;
+- non-urban reference and derived SUHI calculations;
+- urban-to-peripheral thermal-gradient reconstruction;
 - figure and spatial-diagnostic generation.
 
 ## 2. Included public components
@@ -41,14 +46,15 @@ The repository is designed to allow reviewers and researchers to inspect:
 The final public release includes:
 
 - methodological documentation;
-- the complete notebook sequence from `01` to `09`;
+- the complete notebook sequence from `01` to `11`;
 - configuration-reference files;
 - dependency and environment files;
 - lightweight CSV, JSON, YAML, and PNG products;
 - scene-inventory summaries;
 - quality-control and normalization audits;
 - NASA POWER annual and interannual descriptor summaries;
-- model-training, comparison, and evaluation notebooks.
+- model-training, comparison, and evaluation notebooks;
+- final SUHI-reference and thermal-gradient notebooks.
 
 The notebook sequence covers:
 
@@ -67,6 +73,8 @@ The notebook sequence covers:
 08E_train_M5_t3_climate_convlstm_se_unet.ipynb
 08F_compare_models_M1_M5.ipynb
 09_physical_unit_evaluation_and_exports_figures.ipynb
+10_emc_built_2022_reference_and_suhi_diagnostics.ipynb
+11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
 ```
 
 The notebooks are the authoritative executable implementation. The YAML files
@@ -223,8 +231,9 @@ The exact executable subset depends on which external products are available.
 
 ### Level 3: Complete regeneration
 
-A complete reconstruction from original Landsat products through model training
-and full-domain spatial diagnostics requires the full external data chain,
+A complete reconstruction from original Landsat products through model training,
+full-domain spatial diagnostics, non-urban reference construction, and derived
+SUHI analysis requires the full external data chain,
 adequate storage, compatible software, and sufficient computational resources.
 
 The public repository documents this chain but does not contain all required
@@ -288,6 +297,8 @@ A reviewer should be able to use the repository to:
 - assess leakage-control decisions;
 - reproduce selected lightweight outputs when the required external inputs are
   available;
+- inspect the EMC-BUILT-based non-urban reference and continuous SUHI derivation;
+- inspect the urban-to-peripheral thermal-gradient analysis for 2023–2025;
 - determine which claims are directly supported by the public computational
   record and which require external large-volume products.
 
@@ -295,8 +306,9 @@ A reviewer should be able to use the repository to:
 
 This repository is complete for its declared public scope.
 
-It provides the finalized retrospective notebook sequence, methodological
-documentation, configuration references, lightweight audit products, and model
-comparison workflow associated with the current manuscript.
+It provides the finalized retrospective notebook sequence through Notebook 11,
+methodological documentation, configuration references, lightweight audit
+products, model-comparison workflow, and derived SUHI diagnostic closure
+associated with the current manuscript.
 
 No additional public notebooks are planned for this release.
