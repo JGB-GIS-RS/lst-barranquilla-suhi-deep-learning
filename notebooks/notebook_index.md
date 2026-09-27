@@ -24,6 +24,9 @@ Barranquilla LST modeling and derived SUHI study.
 | 10 | `10_emc_built_2022_reference_and_suhi_diagnostics.ipynb` | Reference-zone construction and derived SUHI diagnostics. |
 | 11 | `11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb` | Final urban-to-peripheral gradient analysis. |
 
+
+> **Public notebook note:** Notebooks 10 and 11 preserve the approved computational cells of the final executed notebooks. Inline runtime outputs and execution-specific metadata are omitted from the public copies to keep the repository lightweight and avoid environment-specific metadata; the analytical code is unchanged.
+
 ## 2. Computational blocks
 
 ### Block A — Annual Landsat products and quality control
