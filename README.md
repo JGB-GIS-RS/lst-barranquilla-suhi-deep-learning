@@ -417,8 +417,8 @@ lst-barranquilla-suhi-deep-learning/
 │   ├── 08E_train_M5_t3_climate_convlstm_se_unet.ipynb
 │   ├── 08F_compare_models_M1_M5.ipynb
 │   ├── 09_physical_unit_evaluation_and_exports_figures.ipynb
-│   ├── 50_emc_built_2022_reference_and_suhi_diagnostics.ipynb
-│   └── 51_G3_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
+│   ├── 10_emc_built_2022_reference_and_suhi_diagnostics.ipynb
+│   └── 11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
 │
 ├── .gitignore
 ├── CITATION.cff
@@ -448,8 +448,8 @@ lst-barranquilla-suhi-deep-learning/
 | `08E_train_M5_t3_climate_convlstm_se_unet.ipynb` | M5 training |
 | `08F_compare_models_M1_M5.ipynb` | M1–M5 comparative evaluation |
 | `09_physical_unit_evaluation_and_exports_figures.ipynb` | Physical-unit and spatial LST evaluation |
-| `50_emc_built_2022_reference_and_suhi_diagnostics.ipynb` | EMC-BUILT reference definition and derived SUHI diagnostics |
-| `51_G3_urban_to_peripheral_thermal_gradient_2023_2025.ipynb` | Urban-to-peripheral observed/predicted thermal-gradient analysis |
+| `10_emc_built_2022_reference_and_suhi_diagnostics.ipynb` | EMC-BUILT reference definition and derived SUHI diagnostics |
+| `11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb` | Urban-to-peripheral observed/predicted thermal-gradient analysis |
 
 ---
 
