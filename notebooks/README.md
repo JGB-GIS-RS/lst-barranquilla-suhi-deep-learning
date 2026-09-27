@@ -29,6 +29,9 @@ size and storage requirements.
 | 10 | `10_emc_built_2022_reference_and_suhi_diagnostics.ipynb` | EMC-BUILT harmonization, non-urban reference definition, SUHI derivation, sensitivity, error decomposition, and 2025 SUHI figure. |
 | 11 | `11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb` | Observed/predicted urban-to-peripheral thermal-gradient reconstruction and final figure. |
 
+
+> **Public notebook note:** Notebooks 10 and 11 preserve the approved computational cells of the final executed notebooks. Inline runtime outputs and execution-specific metadata are omitted from the public copies to keep the repository lightweight and avoid environment-specific metadata; the analytical code is unchanged.
+
 ## Scientific scope
 
 The computational sequence is:
