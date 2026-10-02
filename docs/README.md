@@ -1,17 +1,10 @@
 # Documentation
 
-This directory contains the methodological and reproducibility documentation
-supporting the Barranquilla LST/SUHI study.
+This directory contains the methodological and reproducibility documentation supporting the Barranquilla LST/SUHI study.
 
-The documents describe the public computational workflow implemented with
-Landsat 8/9 Collection 2 Level-2 products, annual spectral indices, regional
-climate-radiative descriptors derived from NASA POWER, and spatial-temporal deep
-learning models.
+The documents describe the public computational workflow implemented with Landsat 8/9 Collection 2 Level-2 products, annual spectral indices, regional climate-radiative descriptors derived from NASA POWER, and spatiotemporal deep-learning models.
 
 ## Recommended reading order
-
-Reviewers and users are encouraged to consult the documentation in the following
-order:
 
 1. `workflow.md`
 2. `data_sources.md`
@@ -22,39 +15,16 @@ order:
 
 ## Document descriptions
 
-- `workflow.md`: summarizes the complete public workflow, from Landsat 8/9 scene
-  inventory and annual product generation to tensor construction, patch
-  extraction, model training, independent evaluation, EMC-BUILT-based non-urban
-  reference construction, derived SUHI diagnostics, and urban-to-peripheral
-  thermal-gradient analysis.
-
-- `data_sources.md`: documents the satellite and NASA POWER data sources,
-  temporal coverage, scene-selection logic, spatial reference, and lightweight
-  inventory products.
-
-- `preprocessing.md`: describes quality masking, physical-unit conversion,
-  annual compositing, spectral-index calculation, spatial harmonization,
-  land-domain restriction, train-only normalization, and associated quality
-  controls.
-
-- `modeling.md`: documents the T3 regression formulation, the fixed temporal
-  partition, the M1-M5 comparison design, U-Net, ConvLSTM, squeeze-and-excitation
-  modules, regional climate-radiative descriptors, loss functions, evaluation
-  metrics, and inferential limitations.
-
-- `reproducibility_notes.md`: explains the scope of methodological inspection and
-  partial reproducibility, the external computational requirements, excluded
-  large files, leakage-control criteria, and the intended use of the repository
-  by reviewers and researchers.
-
-- `repository_status.md`: summarizes the components included in the final public
-  release and clarifies how the repository should be interpreted in relation to
-  the manuscript and the external large-volume data products.
+- `workflow.md`: complete public workflow from Landsat scene inventory and annual products to model evaluation and derived SUHI diagnostics.
+- `data_sources.md`: satellite and NASA POWER sources, temporal coverage, scene-selection logic, spatial reference, and lightweight inventory products.
+- `preprocessing.md`: quality masking, physical-unit conversion, annual compositing, spectral indices, spatial harmonization, terrestrial-domain restriction, and fixed pre-validation Landsat normalization.
+- `modeling.md`: T3 regression formulation, fixed temporal partition, M1–M5 comparison design, architectures, descriptors, loss functions, evaluation metrics, and inferential limitations.
+- `reproducibility_notes.md`: scope of methodological inspection and partial reproducibility, external requirements, excluded large files, leakage-control criteria, and intended reviewer use.
+- `repository_status.md`: final public scope and relation to the manuscript and external large-volume products.
 
 ## Documentation scope
 
-The documentation covers the complete public notebook sequence currently included
-in the repository:
+The documentation covers the complete public notebook sequence:
 
 ```text
 01_scene_inventory_landsat_8_9.ipynb
@@ -75,29 +45,23 @@ in the repository:
 11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
 ```
 
-The repository also includes lightweight scene-inventory, quality-control,
-normalization, and NASA POWER summary products, together with configuration
-references and documentation files.
-
-This documentation represents the final public scope of the repository. No
-additional notebooks are required for the public release associated with the
-current manuscript.
+The repository also includes lightweight scene-inventory, quality-control, normalization, and NASA POWER summary products, together with configuration references.
 
 ## Terminology
 
-The folder name `climate_forcings` and related historical file identifiers are
-retained for consistency with the implemented workflow. Scientifically, the NASA
-POWER variables used by M5 are interpreted as annual regional
-climate-radiative descriptors associated with the target year, not as
-spatially distributed climate fields at Landsat resolution.
+The historical notebook name `04_train_only_normalization.ipynb` is retained for traceability. For the reported experiment, Landsat LST and spectral-index parameters are estimated from the fixed pre-validation reference period **2013–2019** and then frozen for later years. VALIDATION and TEST do not contribute to these estimates.
 
-The T3 formulation uses three antecedent annual states:
+The two NASA POWER descriptors used by M5 are normalized separately using target TRAIN years **2016–2019**.
+
+The folder name `climate_forcings` is also retained for consistency with the implemented workflow. Scientifically, the NASA POWER variables used by M5 are annual regional climate-radiative descriptors associated with the target year, not spatially distributed climate fields at Landsat resolution.
+
+T3 formulation:
 
 ```text
 Y-3, Y-2, Y-1 -> LST(Y)
 ```
 
-The target-year partition is:
+Target-year partition:
 
 ```text
 Training:   2016-2019
@@ -107,21 +71,8 @@ Test:       2023-2025
 
 ## Data policy
 
-Large geospatial and machine-learning products are intentionally excluded from
-the GitHub repository, including:
+Large geospatial and machine-learning products are intentionally excluded, including original Landsat scenes, full-resolution annual GeoTIFFs, raster stacks/cubes, tensor and patch datasets, trained checkpoints, full-resolution prediction/residual maps, and temporary products.
 
-- original Landsat scenes;
-- full-resolution annual GeoTIFF products;
-- raster stacks and multi-year cubes;
-- tensor and patch datasets;
-- trained model checkpoints;
-- full-resolution prediction and residual maps;
-- temporary preprocessing products.
+Compact CSV, JSON, YAML, and PNG products may be included when they support methodological transparency and auditability.
 
-The repository may include compact CSV, JSON, YAML, and PNG products when they
-support methodological transparency, auditability, and interpretation.
-
-Complete regeneration of the analysis requires external access to the original
-data and large intermediate products, sufficient storage, and suitable
-computational resources. The notebooks and manuscript remain the authoritative
-descriptions of the implemented scientific workflow.
+Complete regeneration requires external access to the original data and large intermediate products, sufficient storage, and suitable computational resources. The notebooks and manuscript remain the authoritative descriptions of the implemented scientific workflow.
