@@ -1,138 +1,46 @@
 # Reproducibility notes
 
-This document defines the reproducibility scope, computational requirements, and
-explicit limitations of the public Barranquilla LST/SUHI repository.
+This document defines the reproducibility scope, computational requirements, and explicit limitations of the public Barranquilla LST/SUHI repository.
 
 ## 1. Reproducibility objective
 
-The repository provides a transparent and traceable computational record for the
-implemented retrospective modeling workflow based on:
+The repository provides a transparent and traceable computational record for the implemented retrospective modeling workflow based on Landsat 8/9 Collection 2 Level-2 products, annual LST and spectral-index products, fixed pre-validation Landsat normalization, regional climate-radiative descriptors from NASA POWER, T3 tensor construction, deep-learning models M1-M5, statistical and spatial evaluation, EMC-BUILT-based non-urban reference construction, derived continuous SUHI diagnostics, and urban-to-peripheral thermal-gradient analysis.
 
-- Landsat 8/9 Collection 2 Level-2 products;
-- annual LST and spectral-index products;
-- train-only normalization;
-- regional climate-radiative descriptors derived from NASA POWER;
-- T3 tensor construction;
-- deep-learning models M1-M5;
-- statistical and spatial evaluation;
-- EMC-BUILT-based non-urban reference construction;
-- derived continuous SUHI diagnostics;
-- urban-to-peripheral thermal-gradient analysis.
-
-The operational Landsat period is:
+Operational Landsat period:
 
 ```text
 2013-2025
 ```
 
-The year 2026 is excluded because it does not represent a complete annual period
-comparable with the preceding years.
-
-The repository is designed to allow reviewers and researchers to inspect:
-
-- data-source and scene-selection logic;
-- preprocessing and quality-control procedures;
-- normalization and leakage-control decisions;
-- T3 temporal formulation;
-- model architectures and training protocols;
-- model-comparison logic;
-- physical-unit evaluation;
-- non-urban reference and derived SUHI calculations;
-- urban-to-peripheral thermal-gradient reconstruction;
-- figure and spatial-diagnostic generation.
+The year 2026 is excluded because it does not represent a complete annual period comparable with the preceding years.
 
 ## 2. Included public components
 
-The final public release includes:
+The final public release includes methodological documentation, the complete notebook sequence from `01` to `11`, configuration-reference files, dependency and environment files, lightweight CSV/JSON/YAML/PNG products, scene-inventory summaries, quality-control and normalization audits, NASA POWER annual and interannual descriptor summaries, model-training/comparison/evaluation notebooks, and final SUHI-reference and thermal-gradient notebooks.
 
-- methodological documentation;
-- the complete notebook sequence from `01` to `11`;
-- configuration-reference files;
-- dependency and environment files;
-- lightweight CSV, JSON, YAML, and PNG products;
-- scene-inventory summaries;
-- quality-control and normalization audits;
-- NASA POWER annual and interannual descriptor summaries;
-- model-training, comparison, and evaluation notebooks;
-- final SUHI-reference and thermal-gradient notebooks.
-
-The notebook sequence covers:
-
-```text
-01_scene_inventory_landsat_8_9.ipynb
-02_preprocessing_lst_indices.ipynb
-03_quality_control.ipynb
-04_train_only_normalization.ipynb
-05_climate_forcing_integration.ipynb
-06_tensor_construction.ipynb
-07_patch_extraction.ipynb
-08A_train_M1_unet_baseline.ipynb
-08B_train_M2_se_unet.ipynb
-08C_train_M3_convlstm_unet_v5_2016_2025_dirfix.ipynb
-08D_train_M4_convlstm_se_unet.ipynb
-08E_train_M5_t3_climate_convlstm_se_unet.ipynb
-08F_compare_models_M1_M5.ipynb
-09_physical_unit_evaluation_and_exports_figures.ipynb
-10_emc_built_2022_reference_and_suhi_diagnostics.ipynb
-11_urban_to_peripheral_thermal_gradient_2023_2025.ipynb
-```
-
-The notebooks are the authoritative executable implementation. The YAML files
-under `configs/` provide structured configuration references but are not
-automatically loaded by every notebook at runtime.
+The notebooks are the authoritative executable implementation. YAML files under `configs/` provide structured configuration references but are not automatically loaded by every notebook at runtime.
 
 ## 3. Intentionally excluded products
 
-Large geospatial and machine-learning products are not stored in this repository.
+Large geospatial and machine-learning products are not stored in this repository. Excluded products include original Landsat scenes, full-resolution annual GeoTIFFs, aligned raster stacks and cubes, normalized full-resolution rasters, tensor archives, patch datasets, trained model weights/checkpoints, full-resolution prediction and residual maps, and temporary processing products.
 
-The excluded products include:
-
-- original Landsat scenes;
-- full-resolution annual GeoTIFF products;
-- aligned raster stacks and multi-year cubes;
-- normalized full-resolution raster products;
-- tensor archives;
-- extracted patch datasets;
-- trained model weights and checkpoints;
-- full-resolution prediction and residual maps;
-- temporary and intermediate processing outputs;
-- large Google Drive artifacts used during execution.
-
-These exclusions are deliberate and define the storage boundary of the public
-release. They do not indicate that the repository is incomplete for its declared
-scope.
+These exclusions define the storage boundary of the public release.
 
 ## 4. Reproduction boundary
 
-The repository supports methodological inspection and partial reproducibility.
+The repository supports methodological inspection and partial reproducibility. Complete end-to-end regeneration requires external access to the study-area geometry, canonical grid, large annual raster products, tensors/patches, model checkpoints or retraining resources, full-domain rasters, and adequate storage/GPU resources.
 
-Complete end-to-end regeneration requires external access to:
-
-- Landsat 8/9 Collection 2 Level-2 products;
-- the study-area geometry and canonical raster grid;
-- the large annual raster products;
-- tensor and patch archives;
-- model checkpoints or sufficient resources for retraining;
-- the full-domain rasters required for spatial mosaics and diagnostics;
-- adequate storage and GPU-enabled computing resources.
-
-The public repository does not constitute a one-click or fully self-contained
-reproduction package.
-
-Some products can be regenerated from the original data and notebooks, but the
-repository does not guarantee that every large historical intermediate artifact
-can be reproduced without access to the same external data environment and
-processing dependencies used during the study.
+The public repository is not a one-click or fully self-contained reproduction package.
 
 ## 5. Temporal formulation and partitions
 
-The retrospective modeling task uses three antecedent annual spectral states:
+The retrospective modeling task uses:
 
 ```text
 Y-3, Y-2, Y-1 -> LST(Y)
 ```
 
-The fixed target-year partition is:
+with the fixed target-year partition:
 
 ```text
 Training:   2016-2019
@@ -140,34 +48,35 @@ Validation: 2020-2022
 Test:       2023-2025
 ```
 
-The split is assigned by target year before patch extraction. Patches are not
-randomly reassigned across the temporal partitions.
+The split is assigned by target year before patch extraction. This is a temporally controlled retrospective evaluation, not an independent spatial-block validation.
 
-This is a temporally controlled retrospective evaluation. It is not an
-independent spatial-block validation because the same geographic domain may
-appear in different target years.
+## 6. Normalization and leakage-control measures
 
-## 6. Leakage-control measures
+The reported experiment uses two distinct normalization scopes.
 
-The implemented workflow applies the following controls:
+### Landsat LST and spectral indices
 
-- LST normalization parameters are estimated only from training target years;
-- spectral scaling parameters are estimated only from training antecedent
-  predictors;
-- climate-radiative descriptor scaling parameters are estimated only from
-  training target years;
-- normalization parameters remain fixed for validation and test;
+For Landsat-derived annual LST and the six spectral indices, normalization parameters are estimated from the fixed **2013-2019 pre-validation reference period** and then frozen for all later years.
+
+- LST: global z-score with `mu_ref = 38.48322677612305 °C` and `sigma_ref = 4.032179355621338 °C`.
+- Spectral indices: robust percentile-based min-max scaling using `P2-P98`, clipped to `[0,1]`.
+- VALIDATION years 2020-2022 and TEST years 2023-2025 do not contribute to estimation of these Landsat normalization parameters.
+
+The historical notebook/path label `train_only` is retained for traceability and should be interpreted as a leakage-control label rather than as a literal statement that Landsat parameters were estimated only from target TRAIN years 2016-2019.
+
+### M5 climate-radiative descriptors
+
+The two NASA POWER descriptors are normalized separately using parameters estimated from the target TRAIN years 2016-2019 and then frozen for VALIDATION and TEST.
+
+Additional controls are:
+
 - target-year LST is never used as an input predictor;
 - antecedent LST maps are not used as predictors;
 - model predictions and residuals are not reused as model inputs;
-- validation is used for learning-rate adjustment, checkpoint selection, and
-  early stopping;
+- validation is used for learning-rate adjustment, checkpoint selection, and early stopping;
 - TEST is reserved for final retrospective evaluation.
 
-The M5 descriptors are associated with the target year. They do not contain
-target-year LST, but their inclusion changes the interpretation of M5: it is a
-retrospective estimate conditioned on externally known target-year covariates,
-not an autonomous antecedent-only forecast.
+The M5 descriptors are associated with the target year. They do not contain target-year LST, but their inclusion makes M5 a retrospective estimate conditioned on externally known target-year covariates rather than an autonomous antecedent-only forecast.
 
 ## 7. Computational environment
 
@@ -178,137 +87,49 @@ requirements.txt
 environment.yml
 ```
 
-These files document the expected Python and geospatial/deep-learning
-dependencies.
-
-Several notebooks were developed for Google Colab and use external Google Drive
-paths. Users must adapt these paths to their own local or cloud environment.
-
-Full training may require:
-
-- CUDA-compatible GPU acceleration;
-- sufficient RAM and GPU memory;
-- substantial disk or cloud storage;
-- Python geospatial libraries;
-- PyTorch and supporting deep-learning libraries;
-- Google Earth Engine access for the Landsat preprocessing stage;
-- internet access for NASA POWER retrieval when rebuilding climate descriptors.
-
-Exact runtime and hardware demand depend on the external raster, tensor, and
-patch archives.
+Several notebooks were developed for Google Colab and use external Google Drive paths. Users must adapt these paths to their environment. Full training may require CUDA-compatible GPU acceleration, sufficient RAM/GPU memory, substantial storage, Python geospatial libraries, PyTorch, Google Earth Engine access, and internet access for NASA POWER retrieval.
 
 ## 8. Reproducibility levels
 
 ### Level 1: Methodological inspection
 
-Users can inspect:
-
-- documentation;
-- notebooks;
-- configuration references;
-- scene inventories;
-- audit tables;
-- model definitions;
-- training logic;
-- metric calculations;
-- stored notebook outputs.
-
-This level does not require the large external products.
+Users can inspect documentation, notebooks, configuration references, scene inventories, audit tables, model definitions, training logic, metric calculations, and stored lightweight outputs.
 
 ### Level 2: Partial computational reproduction
 
-Users with the required external intermediate inputs can rerun selected stages,
-including:
-
-- normalization audits;
-- tensor or patch validation;
-- model training;
-- model comparison;
-- physical-unit metric conversion;
-- figure generation.
-
-The exact executable subset depends on which external products are available.
+Users with the required external intermediate inputs can rerun selected stages including normalization, tensor or patch validation, model training, model comparison, physical-unit metric conversion, and figure generation.
 
 ### Level 3: Complete regeneration
 
-A complete reconstruction from original Landsat products through model training,
-full-domain spatial diagnostics, non-urban reference construction, and derived
-SUHI analysis requires the full external data chain,
-adequate storage, compatible software, and sufficient computational resources.
-
-The public repository documents this chain but does not contain all required
-large-volume inputs and outputs.
+A complete reconstruction from original Landsat products through model training, full-domain spatial diagnostics, non-urban reference construction, and derived SUHI analysis requires the full external data chain, compatible software, storage, and sufficient computational resources.
 
 ## 9. Model-comparison interpretation
 
-M1-M4 use the same spectral T3 predictor content and fixed temporal partitions,
-allowing architectural comparison under broadly comparable conditions.
-
-M5 adds two regional climate-radiative descriptors and uses a model-specific
-training protocol. Therefore, the M4-M5 comparison represents two complete
-experimental configurations.
-
-It must not be interpreted as:
-
-- a pure climate ablation;
-- an isolated estimate of the contribution of the two NASA POWER variables;
-- evidence of causal atmospheric control;
-- evidence of autonomous future forecasting skill.
+M1-M4 use the same spectral T3 predictor content and fixed temporal partitions. M5 adds two regional climate-radiative descriptors and uses a model-specific training protocol. Therefore, M4-M5 compares complete experimental configurations and must not be interpreted as a pure climate ablation, an isolated estimate of descriptor contribution, evidence of causal atmospheric control, or evidence of autonomous future forecasting skill.
 
 ## 10. Spatial evaluation limitations
 
-The repository documents both patch-based and full-domain evaluation.
+Patch-based TEST metrics and reconstructed full-domain metrics are not numerically interchangeable because they differ in spatial support and reconstruction. Local zoom windows are illustrative spatial diagnostics, not independent validation subsets.
 
-These evaluation contexts are not numerically interchangeable:
-
-- TEST patch metrics are computed from the external non-overlapping patch
-  archive;
-- full-domain metrics may be calculated from a spatial mosaic assembled through
-  overlapping-window inference and weighting;
-- local zoom windows are illustrative spatial diagnostics, not independent
-  validation subsets.
-
-Spatial autocorrelation, shared geographic coverage across years, and smoothing
-of local thermal extremes must be considered when interpreting performance.
+Spatial autocorrelation, shared geographic coverage across years, and smoothing of local thermal extremes must be considered when interpreting performance.
 
 ## 11. Prospective-component boundary
 
-The current public release documents the retrospective LST modeling workflow.
-
-It does not provide an executable public implementation of:
-
-- CA-ANN/MOLUSCE future land-cover simulation;
-- prospective spectral-predictor generation;
-- conditioned 2035 LST/SUHI projection.
-
-Those components correspond to a separate stage of the broader study and are
-outside the declared reproducibility scope of this repository release.
+The current public release documents only the retrospective LST modeling workflow. Prospective land-cover simulation and future LST/SUHI projection components are outside this repository scope.
 
 ## 12. Expected reviewer use
 
-A reviewer should be able to use the repository to:
+A reviewer should be able to verify the Landsat operational period and scene inventory; inspect preprocessing, masking, normalization, T3 construction, model architectures, temporal partitions, evaluation logic, leakage controls, EMC-BUILT reference construction, continuous SUHI derivation, and the urban-to-peripheral thermal-gradient analysis.
 
-- verify the Landsat 8/9 operational period and WRS-2 scene inventory;
-- inspect the annual-product and masking logic;
-- verify train-only normalization procedures;
-- inspect the T3 input construction;
-- inspect the five model architectures;
-- verify the temporal partition and evaluation logic;
-- assess leakage-control decisions;
-- reproduce selected lightweight outputs when the required external inputs are
-  available;
-- inspect the EMC-BUILT-based non-urban reference and continuous SUHI derivation;
-- inspect the urban-to-peripheral thermal-gradient analysis for 2023–2025;
-- determine which claims are directly supported by the public computational
-  record and which require external large-volume products.
+The reference-experiment Landsat normalization parameters are preserved in:
+
+```text
+notebooks/04_train_only_normalization.ipynb
+data/normalization/04_normalization_parameters_train_only_2013_2025.csv
+data/normalization/04_normalization_parameters_train_only_2013_2025.json
+notebooks/09_physical_unit_evaluation_and_exports_figures.ipynb
+```
 
 ## 13. Final status
 
-This repository is complete for its declared public scope.
-
-It provides the finalized retrospective notebook sequence through Notebook 11,
-methodological documentation, configuration references, lightweight audit
-products, model-comparison workflow, and derived SUHI diagnostic closure
-associated with the current manuscript.
-
-No additional public notebooks are planned for this release.
+This repository is complete for its declared public retrospective scope through Notebook 11. Future changes should be limited to corrections, documentation improvements, publication metadata, or explicitly versioned extensions.
