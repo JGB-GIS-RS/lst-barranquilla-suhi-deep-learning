@@ -10,7 +10,7 @@ experiment:
   prospective_component_included: false
 
 associated_manuscript:
-  title: null
+  title: "Retrospective Annual Land Surface Temperature Estimation Using Landsat and Spatiotemporal Deep Learning: Spatial Fidelity and Derived SUHI Diagnostics"
   scope: "Retrospective annual LST modeling and derived SUHI diagnostics for the Barranquilla Metropolitan Area"
   status: "in_preparation"
   target_journal: "Remote Sensing"
@@ -24,6 +24,7 @@ spatial_domain:
   projected_crs: "EPSG:32618"
   projected_crs_name: "WGS 84 / UTM zone 18N"
   spatial_resolution_m: 30
+  canonical_raster_shape: [1115, 1257]
 
 satellite_data:
   primary_product: "Landsat Collection 2 Level-2 Science Products"
@@ -59,6 +60,22 @@ climate_radiative_data:
     - "delta_t2m_mean_Y_minus_Yminus1"
     - "delta_solar_radiation_mean_Y_minus_Yminus1"
   pixel_level_climate_fields: false
+
+built_surface_data:
+  source: "European Commission Joint Research Centre EMC-BUILT"
+  release: "R2025A"
+  reference_epoch: 2022
+  source_crs: "ESRI:54009 World Mollweide"
+  nominal_source_resolution_m: 10
+  source_nodata: 255
+  harmonized_crs: "EPSG:32618"
+  harmonized_resolution_m: 30
+  harmonization: "Conservative extensive-area aggregation using rasterio Resampling.sum"
+  derived_variable: "Built-up fraction per 30 m pixel"
+  built_fraction_threshold: 0.10
+  connected_component_neighborhood: 8
+  core_min_area_km2: 0.333
+  sensitivity_core_min_area_km2: [0.25, 0.333, 0.50]
 
 temporal_design:
   formulation: "Y-3, Y-2, Y-1 -> LST(Y)"
@@ -123,6 +140,30 @@ training_and_evaluation:
   antecedent_lst_used_as_input: false
   predictions_or_residuals_used_as_input: false
 
+suhi_diagnostics:
+  directly_modeled_variable: "LST"
+  suhi_role: "Derived continuous diagnostic"
+  test_years: [2023, 2024, 2025]
+  fixed_reference_definition: "4-6 km from BU_core within fixed TEST support, excluding BU_all"
+  reference_geometry_pixels: 167527
+  reference_geometry_area_km2: 150.7743
+  annual_reference_statistic: "Median LST on pixels where observed and predicted LST are simultaneously valid"
+  urban_support: "BU_core intersect annual common SUHI support"
+  reported_urban_statistics:
+    - "Median SUHI"
+    - "95th percentile of SUHI"
+  suhi_residual_definition: "SUHI_predicted - SUHI_observed"
+  qualitative_intensity_classes_used: false
+  lightweight_tables_directory: "data/suhi_diagnostics"
+
+execution_environment:
+  reference_python_version: "3.12.13"
+  reference_rasterio_version: "1.5.0"
+  primary_runtime: "Google Colab-compatible Python environment"
+  gpu_example: "NVIDIA Tesla T4"
+  exact_full_historical_lockfile_available: false
+  environment_interpretation: "requirements.txt and environment.yml define a compatible public environment; only explicitly documented historical versions are pinned."
+
 reproducibility:
   scope: "Methodological inspection, traceability, and partial computational reproduction"
   complete_self_contained_rerun: false
@@ -137,6 +178,7 @@ reproducibility:
     - "Raw Landsat scenes"
     - "Full-resolution annual GeoTIFF products"
     - "Aligned raster stacks and multi-year cubes"
+    - "Full-resolution EMC-BUILT source and harmonized rasters"
     - "Tensor datasets"
     - "Patch datasets"
     - "Model checkpoints and trained weights"
