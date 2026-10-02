@@ -1,3 +1,9 @@
+# Reference environment note
+# The manuscript explicitly documents Python 3.12.13 and rasterio 1.5.0.
+# Other packages remain intentionally unpinned because exact historical package
+# versions were not preserved; this file therefore specifies a compatible
+# environment rather than a byte-identical lockfile.
+
 # Core numerical and tabular processing
 numpy
 pandas
@@ -5,7 +11,7 @@ scipy
 scikit-learn
 
 # Geospatial processing
-rasterio
+rasterio==1.5.0
 pyproj
 earthengine-api
 requests
