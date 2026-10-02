@@ -28,7 +28,8 @@ data/
 ├── scene_inventory/
 ├── quality_control/
 ├── normalization/
-└── climate_forcings/
+├── climate_forcings/
+└── suhi_diagnostics/
 ```
 
 ## `scene_inventory/`
@@ -72,6 +73,14 @@ delta_solar_radiation_mean_Y_minus_Yminus1
 ```
 
 These variables are treated as annual regional descriptors for the model-domain centroid, not as pixel-level 30 m climate fields.
+
+## `suhi_diagnostics/`
+
+Contains the lightweight tabular outputs exported by Notebooks 10 and 11 for the final non-urban reference, SUHI, sensitivity, urban-support, spectral-control, and urban-to-peripheral gradient analyses.
+
+These tables make the principal numerical SUHI/reference claims directly inspectable without requiring the complete external GeoTIFF archive. The folder includes `reference_stats.csv`, `reference_support.csv`, `sensitivity_R.csv`, `sensitivity_suhi_Amin_025_0333_050.csv`, `urban_support_comparison_BUall_vs_BUcore.csv`, `suhi_p95_domain_vs_urban.csv`, `suhi_error_decomposition_2023_2025.csv`, `suhi_summary_final.csv`, `thermal_gradient.csv`, `thermal_stats.csv`, and `spectral_stats.csv`.
+
+See `data/suhi_diagnostics/README.md` for the file-level manifest and frozen reference definition.
 
 ## Data not stored in this repository
 
