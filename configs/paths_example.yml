@@ -26,6 +26,7 @@ repository_paths:
   quality_control: "data/quality_control"
   normalization: "data/normalization"
   climate_forcings: "data/climate_forcings"
+  suhi_diagnostics: "data/suhi_diagnostics"
 
   docs: "docs"
   documentation_figures: "docs/figures"
@@ -45,6 +46,11 @@ external_inputs:
   normalized_annual_products: "/path/to/external/normalized_annual_products"
 
   nasa_power_source_data: "/path/to/external/nasa_power"
+
+  # EMC-BUILT R2025A, epoch 2022. Notebook 10 expects the original 10 m tile
+  # and writes the harmonized 30 m product beside the study-domain inputs.
+  emc_built_2022_raw: "/path/to/external/emc_built_2022/raw/EMC_BUILT_S_E2022_GLOBE_R2025A_54009_10_V1_0_R8_C11.tif"
+  emc_built_2022_processed: "/path/to/external/emc_built_2022/processed"
 
   tensor_archives: "/path/to/external/tensors"
   patch_archives: "/path/to/external/patches"
@@ -85,6 +91,7 @@ environment_examples:
 notes:
   - "Repository paths identify lightweight files committed to GitHub."
   - "External input and output paths identify large products intentionally excluded from GitHub."
+  - "Notebook 10 requires EMC-BUILT R2025A epoch 2022 and the canonical Landsat grid to reconstruct the non-urban reference and SUHI diagnostics."
   - "Historical archive names such as T3_full and T3_full_M5B_delta_t2m_delta_radiation are retained because they are used by the reference training notebooks."
   - "The public model label is M5; M5B is only a historical internal identifier."
   - "Users must verify notebook-specific paths before execution because the notebooks do not all read this YAML automatically."
