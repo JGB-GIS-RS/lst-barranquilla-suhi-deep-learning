@@ -3,31 +3,18 @@
   "input_v6_dir": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/03_annual_raw_composites/v6_common_valid_mask",
   "normalized_output_dir": "/content/drive/MyDrive/Barranquilla_LST_2013_2026_Modeling/05_normalized_products/v6_train_only_mixed_strategy",
   "operational_period": "2013-2025",
-  "train_years": [
-    2013,
-    2014,
-    2015,
-    2016,
-    2017,
-    2018,
-    2019
-  ],
-  "validation_years": [
-    2020,
-    2021,
-    2022
-  ],
-  "test_years": [
-    2023,
-    2024,
-    2025
-  ],
-  "n_expected_outputs": 117,
-  "n_existing_outputs": 117,
-  "all_outputs_exist": true,
-  "spectral_indices_in_0_1": true,
-  "lst_train_mean_of_year_means_after_zscore": -0.18445089778729848,
-  "lst_train_median_of_year_medians_after_zscore": -0.07390588521957397,
-  "lst_normalization_method": "zscore_train_only",
-  "spectral_normalization_method": "robust_minmax_train_only_p2_5_p97_5_clipped_0_1"
+  "landsat_normalization_reference_period": "2013-2019",
+  "target_train_years": [2016, 2017, 2018, 2019],
+  "validation_target_years": [2020, 2021, 2022],
+  "test_target_years": [2023, 2024, 2025],
+  "lst_normalization_method": "global_zscore_reference_period_2013_2019",
+  "lst_mean": 38.48322677612305,
+  "lst_std": 4.032179355621338,
+  "spectral_normalization_method": "robust_minmax_p2_p98_reference_period_2013_2019_clipped_0_1",
+  "spectral_p_low": 2,
+  "spectral_p_high": 98,
+  "n_reference_values_per_variable": 4301427,
+  "validation_or_test_used_to_estimate_landsat_normalization": false,
+  "climate_descriptor_normalization": "handled separately in Notebook 05 using target TRAIN years 2016-2019",
+  "note": "The historical filename retains train_only terminology. For Landsat LST and spectral indices, the executed reference-experiment parameterization used the pre-validation period 2013-2019."
 }
