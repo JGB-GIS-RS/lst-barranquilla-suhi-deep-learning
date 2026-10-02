@@ -1,8 +1,5 @@
 # Training configuration reference for the Barranquilla LST/SUHI workflow.
-#
-# This file documents the settings implemented in the public training notebooks.
-# It is not automatically loaded by every notebook. The executed notebooks remain
-# the authoritative implementation.
+# This file is a reference record; executed notebooks are authoritative.
 
 configuration_role:
   type: "reference_record"
@@ -17,26 +14,16 @@ configuration_role:
 task:
   name: "supervised_spatiotemporal_regression"
   target: "Annual Landsat-derived LST at target year Y"
-  target_training_scale: "Train-only normalized z-score"
+  target_training_scale: "Fixed reference-period z-score"
   physical_reporting_units: "degrees Celsius"
   temporal_formulation: "Y-3, Y-2, Y-1 -> LST(Y)"
 
 data_partitioning:
   strategy: "Target-year temporal holdout"
   assignment_stage: "Before patch extraction"
-  training_target_years:
-    - 2016
-    - 2017
-    - 2018
-    - 2019
-  validation_target_years:
-    - 2020
-    - 2021
-    - 2022
-  test_target_years:
-    - 2023
-    - 2024
-    - 2025
+  training_target_years: [2016, 2017, 2018, 2019]
+  validation_target_years: [2020, 2021, 2022]
+  test_target_years: [2023, 2024, 2025]
   random_patch_split: false
   independent_spatial_block_holdout: false
   interpretation: "Temporally controlled retrospective evaluation over a shared geographic domain."
@@ -56,24 +43,26 @@ patch_reference:
   archive_note: "Training notebooks consume archived external patch datasets from the reference experiment; large patch archives are not stored in GitHub."
 
 normalization:
-  strategy: "Train-only parameter estimation with fixed application to validation and test data"
-  spectral_indices:
-    method: "Robust percentile-based min-max scaling"
-    variables:
-      - "NDVI"
-      - "NDMI"
-      - "NDBI"
-      - "UI"
-      - "SAVI"
-      - "BSI"
-  lst:
-    method: "Global z-score"
+  landsat:
+    strategy: "Fixed pre-validation reference-period parameter estimation"
+    reference_years: [2013, 2014, 2015, 2016, 2017, 2018, 2019]
+    validation_years_used_for_parameter_estimation: false
+    test_years_used_for_parameter_estimation: false
+    lst:
+      method: "Global z-score"
+      mean_c: 38.48322677612305
+      std_c: 4.032179355621338
+      n_reference_values: 4301427
+    spectral_indices:
+      method: "Robust percentile-based min-max scaling"
+      variables: ["NDVI", "NDMI", "NDBI", "UI", "SAVI", "BSI"]
+      p_low: 2
+      p_high: 98
+      clip_output_to_0_1: true
   climate_radiative_descriptors:
-    method: "Training-period standardization in the archived M5 dataset"
-  leakage_control:
-    validation_statistics_used_for_parameter_estimation: false
-    test_statistics_used_for_parameter_estimation: false
-  historical_artifact_note: "Public reconstruction products and archived reference-experiment patches may retain slightly different historical parameter records. Experiment-specific values used for evaluation are preserved in the corresponding notebooks and outputs."
+    strategy: "Target-TRAIN-only standardization"
+    parameter_years: [2016, 2017, 2018, 2019]
+  historical_label_note: "Historical notebook and directory names retain train_only terminology; for Landsat variables the executed reference experiment used the 2013-2019 pre-validation period."
 
 input_control:
   M1_to_M4:
@@ -89,7 +78,6 @@ input_control:
     - "Antecedent LST maps"
     - "Predictions from previous models"
     - "Model residuals"
-    - "Validation or test target LST"
   climate_radiative_spatial_support: "Annual regional descriptors for the model-domain centroid"
   climate_radiative_pixel_level_fields: false
 
@@ -115,41 +103,15 @@ optimization:
     test_used_for_selection: false
 
 model_specific_training:
-  M1:
-    batch_size: 4
-    maximum_epochs: 100
-    early_stopping_patience_epochs: 15
-    random_seed: 42
-    num_workers: 0
-    pin_memory: false
-  M2:
-    batch_size: 4
-    maximum_epochs: 100
-    early_stopping_patience_epochs: 15
-    random_seed: 42
-    num_workers: 0
-    pin_memory: false
-  M3:
-    batch_size: 4
-    maximum_epochs: 100
-    early_stopping_patience_epochs: 15
-    random_seed: 42
-    num_workers: 0
-    pin_memory: false
-  M4:
-    batch_size: 4
-    maximum_epochs: 100
-    early_stopping_patience_epochs: 15
-    random_seed: 42
-    num_workers: 0
-    pin_memory: false
+  M1: {batch_size: 4, maximum_epochs: 100, early_stopping_patience_epochs: 15, random_seed: 42}
+  M2: {batch_size: 4, maximum_epochs: 100, early_stopping_patience_epochs: 15, random_seed: 42}
+  M3: {batch_size: 4, maximum_epochs: 100, early_stopping_patience_epochs: 15, random_seed: 42}
+  M4: {batch_size: 4, maximum_epochs: 100, early_stopping_patience_epochs: 15, random_seed: 42}
   M5:
     batch_size: 8
     maximum_epochs: 120
     early_stopping_patience_epochs: 18
     random_seed: 20260530
-    num_workers: 0
-    pin_memory: false
     historical_internal_label: "M5B"
 
 validation_and_test_use:
@@ -168,25 +130,11 @@ validation_and_test_use:
     - "Hyperparameter tuning"
 
 evaluation:
-  metrics:
-    - "RMSE"
-    - "MAE"
-    - "Bias"
-    - "R2"
-    - "Valid-pixel count"
+  metrics: ["RMSE", "MAE", "Bias", "R2", "Valid-pixel count"]
   aggregation: "Sufficient statistics accumulated over all valid pixels in each split or target year"
-  reporting_levels:
-    - "Training, validation, and test splits"
-    - "Target year"
-    - "Aggregated TEST period"
   reporting_scales:
     - "Normalized LST units"
     - "Degrees Celsius after inverse transformation"
-  spatial_diagnostics:
-    - "Observed-versus-predicted maps"
-    - "Residual maps"
-    - "Agreement plots"
-    - "Illustrative local zoom windows"
 
 model_comparison:
   M1_to_M4:
@@ -202,21 +150,10 @@ model_comparison:
     same_training_protocol: false
     interpretation: "Comparison between complete experimental configurations, not a pure climate-radiative ablation."
 
-climate_diagnostic_interpretation:
-  retained_M5_descriptors:
-    - "delta_t2m_mean_Y_minus_Yminus1"
-    - "delta_solar_radiation_mean_Y_minus_Yminus1"
-  selection_basis: "Physical consistency and development-stage diagnostics"
-  full_period_tables: "Descriptive post hoc audits"
-  full_period_tables_used_for_checkpoint_selection: false
-  full_period_tables_used_for_hyperparameter_tuning: false
-  full_period_tables_used_to_optimize_TEST_performance: false
-
 execution_environment:
   primary_environment: "Google Colab-compatible Python environment"
   device_selection: "CUDA GPU when available; CPU fallback"
   external_storage: "Google Drive or adapted local/cloud paths"
-  fixed_gpu_model_required: false
   path_adaptation_required: true
 
 notes:
