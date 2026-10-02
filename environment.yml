@@ -6,8 +6,10 @@ channels:
   - defaults
 
 dependencies:
-  # Reference Python environment used by the public notebooks.
-  - python=3.12
+  # Reference versions explicitly documented in the manuscript.
+  # Other packages are left unpinned because the complete historical environment
+  # was not preserved; this YAML defines a compatible environment, not an exact lockfile.
+  - python=3.12.13
 
   # Numerical and tabular processing
   - numpy
@@ -16,7 +18,7 @@ dependencies:
   - scikit-learn
 
   # Geospatial processing and external data access
-  - rasterio
+  - rasterio=1.5.0
   - pyproj
   - requests
   - earthengine-api
