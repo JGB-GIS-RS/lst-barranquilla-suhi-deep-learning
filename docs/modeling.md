@@ -1,12 +1,8 @@
 # Modeling
 
-This document describes the implemented retrospective deep-learning workflow for
-annual land surface temperature (LST) estimation in the Barranquilla Metropolitan
-Area, Colombia.
+This document describes the implemented retrospective deep-learning workflow for annual land surface temperature (LST) estimation in the Barranquilla Metropolitan Area, Colombia.
 
-The public repository documents the T3 temporal formulation, the M1-M5 model
-family, model training, comparative evaluation, conversion of normalized errors
-to physical units, and spatial diagnostics for the retained model.
+The public repository documents the T3 temporal formulation, the M1-M5 model family, model training, comparative evaluation, conversion of normalized errors to physical units, and spatial diagnostics for the retained model.
 
 ## 1. Public modeling scope
 
@@ -17,38 +13,25 @@ The notebooks included in this repository cover:
 - training of models M1-M5;
 - evaluation by temporal split and target year;
 - comparison of normalized and physical-unit performance;
-- full-domain and local spatial diagnostics for M5 when the required external
-  rasters are available.
+- full-domain and local spatial diagnostics for M5 when the required external rasters are available.
 
-The current public release documents the retrospective modeling component. It
-does not implement the CA-ANN/MOLUSCE land-cover simulation, prospective
-spectral-predictor generation, or conditioned 2035 LST/SUHI projection described
-as a separate component of the broader study.
+The current public release documents the retrospective modeling component. It does not implement prospective land-cover or future LST/SUHI projection components.
 
 ## 2. Inferential interpretation
 
-The modeling task is supervised spatial-temporal regression.
-
-For models M1-M4, annual LST for a target year `Y` is estimated exclusively from
-three antecedent Landsat spectral states:
+For models M1-M4, annual LST for a target year `Y` is estimated from three antecedent Landsat spectral states:
 
 ```text
 Y-3, Y-2, Y-1 -> LST(Y)
 ```
 
-M5 uses the same antecedent spectral sequence and two regional
-climate-radiative descriptors associated with the target year. Consequently, M5
-is interpreted as a retrospective LST estimate conditioned on externally known
-target-year covariates. It is not an autonomous operational forecast based only
-on information available before year `Y`.
+M5 uses the same antecedent spectral sequence and two regional climate-radiative descriptors associated with the target year. Consequently, M5 is interpreted as a retrospective LST estimate conditioned on externally known target-year covariates, not as an autonomous antecedent-only forecast.
 
-The target-year Landsat LST is used only as the supervised response for loss and
-metric calculation. It is never included as a predictor.
+The target-year Landsat LST is used only as the supervised response for loss and metric calculation. It is never included as a predictor.
 
 ## 3. Temporal formulation and partition
 
-The operational Landsat period is 2013-2025. Because each target requires three
-antecedent annual states, the modeled target years are 2016-2025.
+The operational Landsat period is 2013-2025. Because each target requires three antecedent annual states, the modeled target years are 2016-2025.
 
 | Split | Target years | Antecedent states |
 |---|---|---|
@@ -56,12 +39,9 @@ antecedent annual states, the modeled target years are 2016-2025.
 | Validation | 2020-2022 | 2017-2021, arranged in rolling T3 windows |
 | Test | 2023-2025 | 2020-2024, arranged in rolling T3 windows |
 
-The split is assigned by target year and remains fixed across the evaluated
-configurations. Patches are not randomly reassigned across temporal partitions.
+The split is assigned by target year and remains fixed across the evaluated configurations. Patches are not randomly reassigned across temporal partitions.
 
-This design is a temporally controlled retrospective evaluation. It is not a
-spatial block holdout, because training, validation, and test patches may cover
-the same geographic domain in different target years.
+This design is a temporally controlled retrospective evaluation. It is not a spatial block holdout, because training, validation, and test patches may cover the same geographic domain in different target years.
 
 ## 4. Predictor and target variables
 
@@ -84,15 +64,11 @@ delta_t2m_mean_Y_minus_Yminus1
 delta_solar_radiation_mean_Y_minus_Yminus1
 ```
 
-These NASA POWER variables are annual regional descriptors derived for the
-model-domain centroid. They are replicated spatially inside each patch only for
-tensor compatibility and must not be interpreted as climate fields distributed at
-30 m resolution.
+These NASA POWER variables are annual regional descriptors derived for the model-domain centroid. They are replicated spatially inside each patch only for tensor compatibility and must not be interpreted as climate fields distributed at 30 m resolution.
 
-The target is annual Landsat-derived LST. During training, LST is represented by
-a global z-score using parameters estimated only from training targets. Spectral
-indices are transformed using robust train-only percentile limits. The stored
-training parameters are applied unchanged to validation and test data.
+The target is annual Landsat-derived LST. For the reported experiment, Landsat LST and the six spectral indices were normalized using parameters estimated from the fixed pre-validation reference period 2013-2019 and then frozen for later years. LST uses a global z-score; spectral indices use robust P2-P98 min-max scaling clipped to `[0,1]`.
+
+The two NASA POWER descriptors used by M5 are normalized separately using parameters estimated from the target TRAIN years 2016-2019.
 
 ## 5. Patch representation and masks
 
@@ -106,8 +82,7 @@ Test stride: 128 pixels
 Minimum valid fraction: 0.70
 ```
 
-Training patches therefore overlap, whereas validation and test patches use a
-systematic non-overlapping grid.
+Training patches therefore overlap, whereas validation and test patches use a systematic non-overlapping grid.
 
 Each sample includes:
 
@@ -118,21 +93,13 @@ mask: binary valid-pixel mask
 target_year: target-year identifier
 ```
 
-The valid mask restricts optimization and evaluation to terrestrial pixels with
-valid antecedent predictors and valid target-year LST. Invalid, water,
-out-of-domain, and unavailable pixels remain inside the rectangular patch but do
-not contribute to the loss or metrics.
+The valid mask restricts optimization and evaluation to terrestrial pixels with valid antecedent predictors and valid target-year LST. Invalid, water, out-of-domain, and unavailable pixels remain inside the rectangular patch but do not contribute to the loss or metrics.
 
-Large tensor and patch archives are external to GitHub. The training notebooks
-load the experiment archives expected by each model family and validate channel
-counts, tensor orientation, target years, and mask compatibility before training.
+Large tensor and patch archives are external to GitHub. The training notebooks load the experiment archives expected by each model family and validate channel counts, tensor orientation, target years, and mask compatibility before training.
 
 ## 6. Tensor organization
 
 ### M1 and M2
-
-For U-Net and SE U-Net, the T3 sequence is represented as an implicit
-multichannel stack:
 
 ```text
 batch x 18 x 128 x 128
@@ -140,8 +107,7 @@ batch x 18 x 128 x 128
 
 ### M3 and M4
 
-For ConvLSTM-based spectral models, the same 18 channels are reorganized as an
-explicit temporal sequence:
+The same 18 spectral channels are reorganized as:
 
 ```text
 batch x 3 x 6 x 128 x 128
@@ -167,9 +133,6 @@ The implementation separates these inputs internally:
 4. the two regional descriptors are concatenated after temporal encoding;
 5. the resulting 34-channel tensor enters the spatial SE U-Net.
 
-Therefore, the raw M5 sample contains 20 channels, but the spatial U-Net receives
-a fused 34-channel representation:
-
 ```text
 32 temporal latent channels + 2 regional descriptors = 34 channels
 ```
@@ -184,26 +147,13 @@ a fused 34-channel representation:
 | M4 | ConvLSTM-SE U-Net | 3 x 6 spectral sequence | Explicit ConvLSTM | Temporal and spatial SE | Tests SE within a recurrent configuration |
 | M5 | T3-Climate ConvLSTM-SE U-Net | 18 spectral + 2 regional descriptors | Explicit spectral ConvLSTM plus auxiliary fusion | Temporal and spatial SE | Final augmented configuration |
 
-The historical identifier `M5B` appears in some external folder names and
-notebook metadata. The public manuscript label is M5.
+The historical identifier `M5B` appears in some external folder names and notebook metadata. The public manuscript label is M5.
 
 ## 8. Architecture
 
-The common spatial backbone is a U-Net-like encoder-decoder with:
+The common spatial backbone is a U-Net-like encoder-decoder with base width 32, three downsampling stages and a bottleneck, transposed-convolution upsampling, encoder-decoder skip concatenations, a linear `1 x 1` output convolution, and dropout of 0.10.
 
-- base width of 32 channels;
-- three downsampling stages and a bottleneck;
-- transposed-convolution upsampling;
-- encoder-decoder skip concatenations;
-- a linear `1 x 1` output convolution;
-- dropout of 0.10.
-
-ConvLSTM models use a 32-channel hidden representation with convolutional gates,
-preserving patch geometry during temporal encoding.
-
-SE blocks perform channel-wise recalibration. Their activations are interpreted
-as internal feature modulation, not as causal importance, independent variable
-importance, or direct biophysical attribution.
+ConvLSTM models use a 32-channel hidden representation with convolutional gates. SE blocks perform channel-wise recalibration and are not interpreted as causal importance measures.
 
 ## 9. Training protocol
 
@@ -229,106 +179,53 @@ Model-specific settings are:
 | M1-M4 | 4 | 100 | 15 | 42 |
 | M5 | 8 | 120 | 18 | 20260530 |
 
-M5 therefore differs from M4 in both predictor set and training protocol. The
-M4-M5 contrast must be interpreted as a comparison between complete
-experimental configurations, not as a pure ablation that isolates the effect of
-the two regional descriptors.
-
-The notebooks are designed for GPU execution in Google Colab-compatible
-environments. Runtime and memory requirements depend on the external patch
-archives and available hardware.
+M5 therefore differs from M4 in both predictor set and training protocol. The M4-M5 contrast must be interpreted as a comparison between complete experimental configurations, not as a pure ablation isolating the two regional descriptors.
 
 ## 10. Loss and metric computation
 
 The masked Huber loss is evaluated only over pixels for which `mask > 0`.
 
-The evaluation notebooks accumulate sufficient statistics over all valid pixels
-within each split or target year. RMSE, MAE, bias, and coefficient of determination
-are therefore computed globally over the evaluated valid pixels rather than
-averaged from independent batch-level metrics.
+Evaluation accumulates sufficient statistics over all valid pixels within each split or target year. RMSE, MAE, bias, and coefficient of determination are computed globally over the evaluated valid pixels rather than averaged from independent batch-level metrics.
 
-The reported diagnostics are:
-
-```text
-RMSE
-MAE
-Bias
-R2
-Number of valid pixels
-```
-
-Evaluation is exported:
-
-- by temporal split;
-- by target year;
-- for the aggregated TEST period;
-- in normalized scale;
-- in degrees Celsius after inverse scaling.
+Diagnostics are exported by temporal split, by target year, for the aggregated TEST period, in normalized scale, and in degrees Celsius after inverse scaling.
 
 ## 11. Model-comparison logic
 
-M1-M4 use the same spectral predictor content, masks, target variable, temporal
-partition, normalization parameters, loss definition, optimizer family,
-checkpoint criterion, and main evaluation metrics. Their comparison therefore
-supports interpretation of architectural differences within the evaluated
-protocol.
+M1-M4 use the same spectral predictor content, masks, target variable, temporal partition, Landsat normalization parameters, loss definition, optimizer family, checkpoint criterion, and main evaluation metrics.
 
-The sequence must not be interpreted as implying that architectural complexity
-should produce monotonic improvement.
-
-M5 is not a strict continuation of that architectural comparison. It introduces
-target-year regional descriptors and uses a specific training configuration.
-Accordingly:
+M5 is not a strict continuation of that architectural comparison. It introduces target-year regional descriptors and a specific training configuration. Therefore:
 
 - M1-M4 constitute the controlled spectral-model comparison;
 - M4-M5 compare complete configurations;
-- the M4-M5 difference cannot be attributed exclusively to climate-radiative
-  augmentation;
-- M5 performance does not demonstrate causal influence of either NASA POWER
-  variable.
+- the M4-M5 difference cannot be attributed exclusively to climate-radiative augmentation;
+- M5 performance does not demonstrate causal influence of either NASA POWER variable.
 
-Notebook `08F_compare_models_M1_M5.ipynb` consolidates the split-wise and
-year-wise outputs from the five training notebooks and generates the comparative
-tables and figures.
+Notebook `08F_compare_models_M1_M5.ipynb` consolidates the split-wise and year-wise outputs from the five training notebooks.
 
 ## 12. Physical-unit evaluation
 
-Notebook `09_physical_unit_evaluation_and_exports_figures.ipynb` converts
-normalized errors to degrees Celsius using the frozen training-only LST standard
-deviation.
-
-For the stored reference parameters:
+Notebook `09_physical_unit_evaluation_and_exports_figures.ipynb` converts normalized errors to degrees Celsius using the frozen LST reference parameters:
 
 ```text
-mu_train = 38.48322677612305 degrees Celsius
-sigma_train = 4.032179355621338 degrees Celsius
+mu_ref    = 38.48322677612305 degrees Celsius
+sigma_ref = 4.032179355621338 degrees Celsius
 ```
+
+These values correspond to the 2013-2019 Landsat reference-period normalization used by the reported experiment.
 
 The conversions are:
 
 ```text
-RMSE_C = RMSE_normalized x sigma_train
-MAE_C = MAE_normalized x sigma_train
-Bias_C = Bias_normalized x sigma_train
+RMSE_C = RMSE_normalized x sigma_ref
+MAE_C = MAE_normalized x sigma_ref
+Bias_C = Bias_normalized x sigma_ref
 ```
 
-`R2` is unchanged when the same linear inverse transformation is applied to the
-observed and predicted values.
-
-The notebook exports model rankings, year-wise TEST diagnostics, and
-manuscript-oriented comparison figures.
+`R2` is unchanged when the same linear inverse transformation is applied to observed and predicted values.
 
 ## 13. Spatial diagnostics
 
-When the required external full-domain rasters are available, Notebook 09 can:
-
-- read normalized observed and predicted M5 rasters;
-- apply inverse z-score normalization;
-- export observed, predicted, and residual GeoTIFFs in degrees Celsius;
-- calculate full-domain RMSE, MAE, bias, `R2`, and Pearson correlation;
-- generate observed-predicted agreement graphics;
-- produce residual maps;
-- produce selected local zoom-window diagnostics.
+When the required external full-domain rasters are available, Notebook 09 can read normalized observed and predicted M5 rasters, apply inverse z-score normalization, export observed/predicted/residual GeoTIFFs in degrees Celsius, calculate full-domain metrics, and generate agreement and residual diagnostics.
 
 Residuals are defined as:
 
@@ -336,59 +233,32 @@ Residuals are defined as:
 predicted LST - observed LST
 ```
 
-The local zoom windows are illustrative spatial diagnostics. They are not
-independent validation subsets and must not be interpreted as additional
-holdouts.
-
-The full-domain mosaic metrics are also not numerically interchangeable with
-metrics calculated from the non-overlapping TEST patch archive, because the
-mosaic may be assembled from overlapping windows and spatial weighting.
+Local zoom windows are illustrative spatial diagnostics, not independent validation subsets. Full-domain mosaic metrics are not numerically interchangeable with metrics calculated from the non-overlapping TEST patch archive.
 
 ## 14. Leakage control
 
 The implemented workflow applies the following controls:
 
 - target-year partitions are fixed before model training;
-- LST scaling parameters are estimated only from training targets;
-- spectral scaling parameters are estimated only from training predictors;
-- scaling parameters are frozen for validation and test;
+- Landsat LST and spectral normalization parameters are estimated from the fixed 2013-2019 pre-validation reference period;
+- validation years 2020-2022 and TEST years 2023-2025 do not contribute to Landsat normalization parameter estimation;
+- M5 climate-radiative scaling parameters are estimated from target TRAIN years 2016-2019;
+- all scaling parameters are frozen for subsequent application;
 - target-year LST is not used as an input;
 - antecedent LST maps are not used as predictors;
 - model predictions and residuals are not predictors;
-- validation controls learning-rate scheduling, checkpoint selection, and early
-  stopping;
-- TEST is reserved for final retrospective evaluation and is not used for
-  checkpoint selection or hyperparameter optimization.
+- validation controls learning-rate scheduling, checkpoint selection, and early stopping;
+- TEST is reserved for final retrospective evaluation and is not used for checkpoint selection or hyperparameter optimization.
 
-The NASA POWER descriptors used by M5 are associated with the target year. Their
-use does not introduce target LST into the input, but it changes the inferential
-meaning of M5 from antecedent-only estimation to estimation conditioned on known
-or prescribed external covariates.
+The NASA POWER descriptors used by M5 are associated with the target year. Their use does not introduce target LST into the input, but it changes the inferential meaning of M5 from antecedent-only estimation to estimation conditioned on known or prescribed external covariates.
 
 ## 15. Limitations
 
-The modeling design has several explicit limitations:
-
-- the annual composites do not represent daily or intra-seasonal thermal
-  variability;
-- the temporal split is not an independent spatial-block validation;
-- spatial autocorrelation may increase similarity among patches from the same
-  domain;
-- training overlap increases sample density but not the number of independent
-  geographic regions;
-- NASA POWER descriptors do not represent intra-urban climate variability;
-- M5 cannot operate prospectively without prescribed target-year
-  climate-radiative assumptions;
-- M4-M5 is not a pure climate ablation;
-- SE responses are not causal explanations;
-- convolutional regression can smooth local thermal extremes and compress the
-  observed temperature range;
-- full reproduction requires external tensors, patch archives, checkpoints, and
-  full-resolution rasters.
+The modeling design has several explicit limitations: annual composites do not represent daily or intra-seasonal thermal variability; the temporal split is not an independent spatial-block validation; spatial autocorrelation may increase similarity among patches; training overlap increases sample density but not the number of independent geographic regions; NASA POWER descriptors do not represent intra-urban climate variability; M5 cannot operate prospectively without prescribed target-year climate-radiative assumptions; M4-M5 is not a pure climate ablation; SE responses are not causal explanations; convolutional regression can smooth local thermal extremes; and full reproduction requires external tensors, patch archives, checkpoints, and full-resolution rasters.
 
 ## 16. Reproducibility boundary
 
-The authoritative implementations are:
+The authoritative modeling implementations are:
 
 ```text
 notebooks/07_patch_extraction.ipynb
@@ -401,10 +271,4 @@ notebooks/08F_compare_models_M1_M5.ipynb
 notebooks/09_physical_unit_evaluation_and_exports_figures.ipynb
 ```
 
-The YAML files under `configs/` provide structured configuration references, but
-the notebooks contain the executed implementations and take precedence if a
-discrepancy is found.
-
-The public repository supports methodological inspection, traceability, and
-partial reproducibility. Complete execution requires the external large-volume
-products and adequate computational resources.
+The YAML files under `configs/` provide structured configuration references, but the notebooks contain the executable implementations and take precedence if a discrepancy is found.
